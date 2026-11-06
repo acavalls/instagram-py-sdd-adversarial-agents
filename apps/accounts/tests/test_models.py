@@ -3,6 +3,7 @@
 import uuid
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 
 from apps.accounts.models import (
@@ -76,6 +77,27 @@ def test_username_format_validation():
     assert User.validate_registration(username="abc", email="a@example.com") is None
     assert User.validate_registration(username="a" * 150, email="a@example.com") is None
     assert User.validate_registration(username="Alice1", email="a@example.com") is None
+
+
+def test_model_rejects_non_alphanumeric_username_on_direct_save():
+    """Task 2.1 (DRIFT-002): the alphanumeric rule is enforced at the MODEL
+    level, so any creation path (admin forms, a shell ``full_clean()``, or a
+    bare ``save()`` — which the model now validates via ``save()`` itself)
+    rejects a non-alphanumeric username even when no web/API validation
+    runs."""
+    user = User(username="bad name!", email="bad@example.com", password=RAW_PASSWORD)
+
+    with pytest.raises(ValidationError) as excinfo:
+        user.full_clean()
+
+    assert USERNAME_FORMAT_ERROR in str(excinfo.value)
+    assert not User.objects.filter(email="bad@example.com").exists()
+
+    # A well-formed username passes model validation and saves fine.
+    valid_user = User(username="GoodName1", email="good@example.com", password=RAW_PASSWORD)
+    valid_user.full_clean()
+    valid_user.save()
+    assert User.objects.filter(username="GoodName1").exists()
 
 
 def test_username_and_email_must_be_unique():

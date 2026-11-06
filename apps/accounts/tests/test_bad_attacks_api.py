@@ -155,15 +155,14 @@ def test_atk_007_duplicate_double_submit(api):
 
 def test_atk_008_login_failure_shapes(api):
     """ATK-008: login attacks — empty username, missing fields, wrong password,
-    unknown user. Wrong credentials must always be 401 with the identical
-    generic error; structurally invalid input may be 400 but never a 500."""
+    unknown user. EVERY failure is now 401 with the identical generic error
+    (regularization change: blank/missing fields moved from 400 to the same
+    generic 401, so no failure shape leaks any cause or field hint)."""
     create_user()
 
     empty_username = api.post(LOGIN_URL, {"username": "", "password": "whatever123"}, format="json")
-    # Blank input is a validation failure (400) — still no cause leak; wrong
-    # credentials below must always be the identical generic 401.
-    assert empty_username.status_code in (400, 401)
-    assert empty_username.status_code < 500
+    assert empty_username.status_code == 401
+    assert empty_username.json() == {"error": "Invalid credentials"}
 
     wrong_password = api.post(
         LOGIN_URL, {"username": VALID["username"], "password": "wrong-password"}, format="json"
@@ -176,8 +175,8 @@ def test_atk_008_login_failure_shapes(api):
     assert wrong_password.json() == unknown_user.json() == {"error": "Invalid credentials"}
 
     missing = api.post(LOGIN_URL, {"username": VALID["username"]}, format="json")
-    assert missing.status_code == 400
-    assert missing.status_code < 500
+    assert missing.status_code == 401
+    assert missing.json() == {"error": "Invalid credentials"}
 
 
 def test_atk_009_wrong_input_types(api):

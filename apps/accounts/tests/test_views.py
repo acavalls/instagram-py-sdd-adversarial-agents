@@ -111,6 +111,52 @@ def test_failed_api_login(api_client):
     assert response.json()["error"] == "Invalid credentials"
 
 
+def test_api_login_with_missing_fields(api_client):
+    """Scenario: API login with missing fields — blank or missing username or
+    password answers the same generic 401, never revealing which field is
+    missing."""
+    User.objects.create_user(
+        username="alice", email="alice@example.com", password="sup3r-secret-pw"
+    )
+
+    attacks = [
+        {"username": "", "password": "sup3r-secret-pw"},  # blank username
+        {"username": "alice", "password": ""},  # blank password
+        {"username": "alice"},  # missing password
+        {"password": "sup3r-secret-pw"},  # missing username
+        {},  # everything missing
+    ]
+    for payload in attacks:
+        response = api_client.post(LOGIN_URL, payload)
+        assert response.status_code == 401, payload
+        # Identical generic body for every failure shape: no field hints.
+        assert response.json() == {"error": "Invalid credentials"}, payload
+
+
+def test_password_with_surrounding_spaces_round_trips_api(api_client):
+    """The API never trims the password (DRIFT-012): a password registered
+    with surrounding spaces is stored byte-exactly and only authenticates
+    with those same spaces."""
+    padded_password = " sup3r-secret-pw "
+
+    register = api_client.post(
+        REGISTER_URL,
+        {"username": "alice", "email": "alice@example.com", "password": padded_password},
+    )
+    assert register.status_code == 201
+    user = User.objects.get(username="alice")
+    assert user.check_password(padded_password)
+
+    login = api_client.post(LOGIN_URL, {"username": "alice", "password": padded_password})
+    assert login.status_code == 200
+
+    # The trimmed variant is a different credential and must fail.
+    trimmed_login = api_client.post(
+        LOGIN_URL, {"username": "alice", "password": padded_password.strip()}
+    )
+    assert trimmed_login.status_code == 401
+
+
 def test_successful_token_refresh(api_client):
     user = User.objects.create_user(
         username="alice", email="alice@example.com", password="sup3r-secret-pw"

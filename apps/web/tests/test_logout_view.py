@@ -26,7 +26,7 @@ def test_successful_logout(client, alice):
     client.force_login(alice)
     assert "_auth_user_id" in client.session
 
-    response = client.get(LOGOUT_URL)
+    response = client.post(LOGOUT_URL)
 
     assert response.status_code == 302
     assert response.url == LOGIN_URL
@@ -38,6 +38,21 @@ def test_successful_logout(client, alice):
     follow_up = client.get(FEED_URL)
     assert follow_up.status_code == 302
     assert follow_up.url.startswith(LOGIN_URL)
+
+
+def test_get_logout_no_longer_logs_out(client, alice):
+    """Logout is POST-only (Django's CSRF recommendation): a GET request must
+    answer 405 without touching the session, so a pre-fetched/logout-via-link
+    GET cannot end the user's session."""
+    client.force_login(alice)
+    assert "_auth_user_id" in client.session
+
+    response = client.get(LOGOUT_URL)
+
+    assert response.status_code == 405
+    # The session survived: the user is still authenticated.
+    assert "_auth_user_id" in client.session
+    assert client.get(FEED_URL).status_code == 200
 
 
 def test_protected_pages_require_login(client):

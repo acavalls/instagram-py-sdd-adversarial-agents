@@ -8,6 +8,7 @@ pytestmark = pytest.mark.django_db
 
 REGISTER_URL = "/web/register/"
 LOGIN_URL = "/web/login/"
+FEED_URL = "/web/feed/"
 
 VALID_DATA = {
     "username": "alice",
@@ -101,3 +102,21 @@ def test_username_format_validation(client):
     response = post_register(client, username="ab")
     assert response.status_code == 200
     assert "Username must be between 3 and 150 characters" in shown_messages(response)
+
+
+def test_padded_password_round_trips_web_register_and_login(client):
+    """The web path never trims the password (DRIFT-012): a password
+    registered with surrounding spaces is stored byte-exactly and only
+    authenticates with those same spaces (parity with the API path)."""
+    padded_password = " sup3r-secret-pw "
+
+    register_response = post_register(client, password=padded_password)
+    assert register_response.status_code == 302
+    assert register_response.url == LOGIN_URL
+    user = User.objects.get(username="alice")
+    assert user.check_password(padded_password)
+
+    login_response = client.post(LOGIN_URL, {"username": "alice", "password": padded_password})
+    assert login_response.status_code == 302
+    assert login_response.url == FEED_URL
+    assert "Logged in successfully" in shown_messages(login_response)

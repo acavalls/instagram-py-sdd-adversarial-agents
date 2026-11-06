@@ -13,6 +13,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect, render
+from django.views.decorators.http import require_POST
 
 from apps.accounts.models import PASSWORD_MIN_LENGTH, PASSWORD_TOO_SHORT_ERROR, User
 from apps.accounts.use_cases import (
@@ -98,8 +99,15 @@ def login(request: HttpRequest) -> HttpResponse:
     return render(request, "web/login.html", context)
 
 
+@require_POST
 def logout(request: HttpRequest) -> HttpResponse:
-    """Clear the session and redirect back to the login page with a toast."""
+    """Clear the session and redirect back to the login page with a toast.
+
+    POST-only (DRIFT-011, Django's recommendation for logout): a state-
+    changing action must not be triggerable by GET, and POST requests are
+    CSRF-protected by ``CsrfViewMiddleware``. Non-POST requests answer 405
+    without touching the session.
+    """
     auth_logout(request)
     messages.success(request, LOGOUT_SUCCESS_TOAST)
     return redirect(LOGIN_PAGE_URL)

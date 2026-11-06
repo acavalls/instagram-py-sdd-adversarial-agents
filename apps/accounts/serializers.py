@@ -1,19 +1,16 @@
 """DRF serializers for the accounts capability."""
 
-from django.core.validators import RegexValidator
 from rest_framework import serializers
 
 from apps.accounts.models import (
     PASSWORD_MIN_LENGTH,
     PASSWORD_TOO_SHORT_ERROR,
-    USERNAME_FORMAT_ERROR,
+    USERNAME_ALPHANUMERIC_VALIDATOR,
     USERNAME_LENGTH_ERROR,
     USERNAME_MAX_LENGTH,
     USERNAME_MIN_LENGTH,
     User,
 )
-
-_USERNAME_REGEX = r"^[a-zA-Z0-9]+$"
 
 
 class LoginSerializer(serializers.Serializer):
@@ -21,11 +18,14 @@ class LoginSerializer(serializers.Serializer):
 
     No field-format rules here — wrong or unknown credentials are reported
     generically by the use case (design decision 6), so any shape of input is
-    accepted and answered with the same "Invalid credentials" error.
+    accepted and answered with the same "Invalid credentials" error. The
+    password is compared byte-exactly (``trim_whitespace=False``, DRIFT-012):
+    a password registered with surrounding spaces only authenticates with
+    those same spaces. The username keeps trimming, matching the web path.
     """
 
     username = serializers.CharField()
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, trim_whitespace=False)
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -34,18 +34,21 @@ class UserCreateSerializer(serializers.ModelSerializer):
     Field-format rules (design decision 2): username 3-150 alphanumeric,
     valid email shape, password of at least 8 characters (write-only, never
     exposed in responses). Identity duplicates are NOT validated here — the
-    use case reports them so the API view can answer 409.
+    use case reports them so the API view can answer 409. The password is
+    stored byte-exactly (``trim_whitespace=False``, DRIFT-012): surrounding
+    spaces are part of the credential, matching the web path.
     """
 
     username = serializers.CharField(
         min_length=USERNAME_MIN_LENGTH,
         max_length=USERNAME_MAX_LENGTH,
         error_messages={"min_length": USERNAME_LENGTH_ERROR},
-        validators=[RegexValidator(regex=_USERNAME_REGEX, message=USERNAME_FORMAT_ERROR)],
+        validators=[USERNAME_ALPHANUMERIC_VALIDATOR],
     )
     email = serializers.EmailField()
     password = serializers.CharField(
         write_only=True,
+        trim_whitespace=False,
         min_length=PASSWORD_MIN_LENGTH,
         max_length=128,
         error_messages={"min_length": PASSWORD_TOO_SHORT_ERROR},

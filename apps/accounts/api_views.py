@@ -2,6 +2,7 @@
 
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.exceptions import ParseError
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -12,6 +13,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from apps.accounts.serializers import LoginSerializer, UserCreateSerializer
 from apps.accounts.use_cases import (
+    INVALID_CREDENTIALS_ERROR,
     AuthenticateUserInput,
     AuthenticateUserUseCase,
     RegisterUserInput,
@@ -52,15 +54,35 @@ class LoginAPIView(APIView):
     generic-error rule stays in the use case layer (design decision 6). On
     success the response carries the user data (mirroring the register
     response shape) plus an access/refresh token pair issued with
-    ``RefreshToken.for_user`` (design decision 3).
+    ``RefreshToken.for_user`` (design decision 3). ANY failure — wrong
+    credentials, unknown user, blank/missing fields (DRIFT-008) or an
+    unparseable body (the request then carries no usable credentials) —
+    answers 401 with the identical generic error, never revealing the cause.
     """
 
     permission_classes = [AllowAny]
 
+    def handle_exception(self, exc: Exception) -> Response:
+        """Map a JSON parse error to the same generic 401 as any other
+        login failure: an unparseable body carries no usable credentials,
+        so DRF's default 400 'JSON parse error' detail would leak that the
+        request shape — not the credentials — was the problem."""
+        if isinstance(exc, ParseError):
+            return Response(
+                {"error": INVALID_CREDENTIALS_ERROR}, status=status.HTTP_401_UNAUTHORIZED
+            )
+        return super().handle_exception(exc)
+
     @extend_schema(request=LoginSerializer, responses={200: UserCreateSerializer})
     def post(self, request: Request, *args: object, **kwargs: object) -> Response:
         serializer = LoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        # Blank or missing fields are a login failure too: the spec mandates
+        # the same generic 401 for any login failure, so serializer validation
+        # errors map to the identical response as wrong credentials.
+        if not serializer.is_valid():
+            return Response(
+                {"error": INVALID_CREDENTIALS_ERROR}, status=status.HTTP_401_UNAUTHORIZED
+            )
         output = AuthenticateUserUseCase().execute(
             AuthenticateUserInput(
                 username=serializer.validated_data["username"],
