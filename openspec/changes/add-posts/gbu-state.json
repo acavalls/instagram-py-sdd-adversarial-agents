@@ -1,6 +1,6 @@
 {
   "change": "add-posts",
-  "status": "in_progress",
+  "status": "awaiting_sheriff",
   "current_group": "5",
   "current_iteration": 1,
   "groups": {
@@ -83,15 +83,20 @@
     }
   },
   "bad": {
-    "status": "fix_applied",
+    "status": "SURVIVES",
     "iterations": 2,
     "wall_clock_minutes": 4,
     "test_runner_executions": 6,
-    "bugs_fixed": [
-      "BUG-001",
-      "BUG-002"
+    "bugs": [
+      "BUG-001 fixed",
+      "BUG-002 fixed"
     ],
-    "budget_note": "Re-attack cycle granted (defaults adjustable per workflow): +6 min, +6 test runs, iteration 2 of 2 for the re-attack cycle"
+    "reattack": {
+      "status": "SURVIVES",
+      "iterations": 1,
+      "wall_clock_minutes": 6,
+      "test_runner_executions": 6
+    }
   },
   "budget": {
     "good_ugly_max_iterations_per_group": 3,
@@ -114,6 +119,7 @@
     "group4 ugly APPROVED iter1 (observations: inline HTMX toasts, base_auth naming - non-blocking)",
     "group5 integration checks COMPLETED by orchestrator",
     "bad BROKEN iter1: BUG-001, BUG-002 -> good fix round 1",
-    "good fixed BUG-001/BUG-002 iter2; orchestrator fixed mypy typing in bad regression file; bad re-attack granted"
+    "good fixed BUG-001/BUG-002 iter2; orchestrator fixed mypy typing in bad regression file; bad re-attack granted",
+    "bad re-attack SURVIVES; report generated; awaiting sheriff at PAUSE-1"
   ]
 }
