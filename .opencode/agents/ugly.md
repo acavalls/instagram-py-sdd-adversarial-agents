@@ -4,16 +4,63 @@ mode: subagent
 permission:
   edit: deny
   bash:
+    # Fallback first: anything not matched below asks. Read-only allows after
+    # (opencode applies the LAST matching rule). Destructive denies last so
+    # they win over any broader allow.
     "*": ask
+    # Test runner, linters, type checker (venv and bare forms)
     "pytest *": allow
+    ".venv/bin/pytest *": allow
     "python *": allow
+    "python3 *": allow
+    ".venv/bin/python *": allow
+    ".venv/bin/python3 *": allow
     "ruff *": allow
+    ".venv/bin/ruff *": allow
     "mypy *": allow
-    "git status *": allow
-    "git diff *": allow
-    "git log *": allow
+    ".venv/bin/mypy *": allow
+    # Django management read-only checks
+    "*manage.py check*": allow
+    "*manage.py makemigrations --check*": allow
+    "*manage.py shell -c*": allow
+    # Read-only inspection
     "ls *": allow
     "cat *": allow
+    "head *": allow
+    "tail *": allow
+    "grep *": allow
+    "rg *": allow
+    "find *": allow
+    "wc *": allow
+    "which *": allow
+    "echo *": allow
+    "file *": allow
+    "stat *": allow
+    "tree *": allow
+    "sed -n *": allow
+    "git status*": allow
+    "git diff*": allow
+    "git log*": allow
+    "git show*": allow
+    "git rev-parse *": allow
+    "git branch": allow
+    "openspec *": allow
+    # Destructive guards (must come after the allows above)
+    "rm *": deny
+    "rmdir *": deny
+    "mv *": deny
+    "cp *": deny
+    "chmod *": deny
+    "chown *": deny
+    "sed -i*": deny
+    "git add*": deny
+    "git commit*": deny
+    "git push*": deny
+    "git checkout*": deny
+    "git reset*": deny
+    "git clean*": deny
+    "manage.py migrate*": deny
+    "*manage.py migrate*": deny
 temperature: 0.3
 ---
 
