@@ -1,0 +1,64 @@
+schema: spec-driven
+
+# Injected into EVERY artifact generation. Deliberately concise.
+context: |
+  django_ig: an Instagram clone used as a learning project for spec-driven
+  development (SDD). Feature parity with the reference app is the goal:
+  accounts, posts with media, 24h stories, follows, feed, suggestions,
+  a REST API and an HTMX web UI.
+
+  Fixed stack (not renegotiated in proposals):
+  - Backend: Python 3.12 with Django 5+ and Django REST Framework.
+    SQLite in development (single file; enough for this project).
+  - API auth: JWT via djangorestframework-simplejwt; OpenAPI schema and
+    Swagger UI via drf-spectacular. Web auth: Django sessions.
+  - Frontend: Django templates + HTMX, CSS with gradients and Google
+    Fonts. No frontend build step, no SPA framework.
+  - Architecture (fixed; not renegotiated in designs): Clean Architecture
+    layers — views → use_cases → services → models — with apps organized
+    by domain: accounts, posts, social, web. The REST API lives inside the
+    domain apps (serializers/views per app) with routing in config/urls.py;
+    there is no separate api app.
+  - Media handling: Pillow; stories and posts use generated placeholder
+    images (no file picker).
+  - Tests: pytest with pytest-django; every scenario in the specs must
+    have a test traceable by the scenario name. Coverage must stay >= 80%.
+  - Quality gates: ruff (lint + format) and mypy must pass.
+  - Development data: seed_demo_data management command, no external fixtures.
+
+  Non-negotiable principles:
+  1. The spec is the source of truth: every observable behavior change
+     must land as an OpenSpec change (proposal + deltas) or be
+     regularized as such. Behavior not described in openspec/specs/ is a
+     defect, even if the code works.
+  2. Simplicity above all: this is a learning clone, not a platform.
+     When two solutions exist, always pick the simpler one.
+  3. Layer discipline: business logic lives in use cases and services;
+     views and templates never contain business rules.
+  4. Dual auth is intentional: sessions for the web UI, JWT for the API.
+     Do not unify them without an explicit OpenSpec change.
+  5. Deterministic media: generated placeholder images, never copyrighted
+     assets.
+
+# Per-artifact rules: only injected when generating that artifact.
+rules:
+  specs:
+    - Write in English keeping the normative keyword of every requirement
+      (MUST/SHALL), e.g. "The system MUST list posts from followed users"
+    - Reuse terms already defined in the living specs; do not introduce
+      new synonyms for existing concepts
+  proposal:
+    - Record every business decision in proposal.md with its date
+  design:
+    - No new dependency without a written justification
+  tasks:
+    - Group tasks by capability; each task must map to a spec requirement
+      or scenario
+
+operations:
+  apply:
+    guidance:
+      - Run pytest and ruff after each task; report results concisely
+  archive:
+    guidance:
+      - Summarize which scenarios are now covered by tests before closing
