@@ -1,0 +1,26 @@
+<article class="post-card" id="post-{{ post.pk }}">
+    {% if toast_message %}
+        <div class="toast {{ toast_tags }}">{{ toast_message }}</div>
+    {% endif %}
+    <div class="post-body">
+        {% with media=post.media.all.0 %}
+            {% if media %}
+                <img class="post-media" src="{{ media.image.url }}" alt="Post media">
+            {% endif %}
+        {% endwith %}
+        <div class="post-meta">
+            <span class="post-owner">{{ post.owner.username }}</span>
+            <span class="post-timestamp">{{ post.created_at|date:"d M Y, H:i" }}</span>
+        </div>
+        <p class="post-caption">{{ post.caption }}</p>
+        <div class="post-actions">
+            <button class="post-action"
+                    hx-get="{% url 'web:post-edit-form' post.pk %}"
+                    hx-target="closest .post-card" hx-swap="outerHTML">Edit</button>
+            <button class="post-action post-action-danger"
+                    hx-post="{% url 'web:post-delete' post.pk %}"
+                    hx-confirm="Delete this post?"
+                    hx-target="closest .post-card" hx-swap="outerHTML">Delete</button>
+        </div>
+    </div>
+</article>

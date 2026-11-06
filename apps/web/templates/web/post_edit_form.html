@@ -1,0 +1,16 @@
+<article class="post-card" id="post-{{ post.pk }}">
+    <div class="post-body">
+        <form hx-post="{% url 'web:post-submit-edit' post.pk %}"
+              hx-target="closest .post-card" hx-swap="outerHTML">
+            {% csrf_token %}
+            <textarea class="auth-field post-caption-input" name="caption" rows="3"
+                      maxlength="2200" placeholder="Write a caption...">{{ post.caption }}</textarea>
+            <div class="post-actions">
+                <button class="auth-button" type="submit" style="width:auto;margin-top:0;">Save</button>
+                <button class="post-action post-action-cancel" type="button"
+                        hx-get="{% url 'web:post-cancel-edit' post.pk %}"
+                        hx-target="closest .post-card" hx-swap="outerHTML">Cancel</button>
+            </div>
+        </form>
+    </div>
+</article>

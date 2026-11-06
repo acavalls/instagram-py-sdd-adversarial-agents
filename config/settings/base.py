@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     # Local apps (domain-organized, per openspec/config.yaml)
     "apps.accounts",
+    "apps.posts",
     "apps.web",
 ]
 

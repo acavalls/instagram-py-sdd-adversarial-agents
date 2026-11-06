@@ -1,6 +1,6 @@
 """URL routes for the web UI (session-based)."""
 
-from django.urls import path
+from django.urls import include, path
 
 from apps.web import views
 
@@ -11,4 +11,6 @@ urlpatterns = [
     path("login/", views.login, name="login"),
     path("logout/", views.logout, name="logout"),
     path("feed/", views.feed, name="feed"),
+    # Web post CRUD (patterns in task group 4, design decision 6)
+    path("posts/", include("apps.posts.web_urls")),
 ]

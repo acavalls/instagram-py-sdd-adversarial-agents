@@ -2,6 +2,129 @@
 
 {% block title %}Feed · Instagram{% endblock %}
 
+{% block extra_style %}
+        .auth-card.feed-card {
+            max-width: 620px;
+        }
+        .feed-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+        .feed-title {
+            font-family: "Grand Hotel", cursive;
+            font-size: 28px;
+            color: var(--ig-text);
+        }
+        .feed-create {
+            width: auto;
+            margin-top: 0;
+            padding: 8px 16px;
+        }
+        .post-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .post-card {
+            border: 1px solid var(--ig-border);
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fff;
+            text-align: left;
+        }
+        .post-media {
+            width: 100%;
+            display: block;
+            aspect-ratio: 1;
+            object-fit: cover;
+        }
+        .post-body {
+            padding: 10px 14px 14px;
+        }
+        .post-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #8e8e8e;
+            margin-bottom: 6px;
+        }
+        .post-owner {
+            font-weight: 600;
+            color: var(--ig-text);
+        }
+        .post-caption {
+            font-size: 14px;
+            color: var(--ig-text);
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+        }
+        .post-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .post-action {
+            padding: 6px 12px;
+            font-size: 13px;
+            border: 1px solid var(--ig-border);
+            background: #fff;
+            color: var(--ig-text);
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .post-action-danger {
+            color: #ed4956;
+            border-color: #ed4956;
+        }
+        .post-action-cancel {
+            background: #fafafa;
+        }
+        .post-caption-input {
+            width: 100%;
+            margin-bottom: 10px;
+            resize: vertical;
+        }
+        .feed-empty {
+            text-align: center;
+            font-size: 14px;
+            color: #8e8e8e;
+            padding: 24px 0;
+        }
+        .feed-pagination {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            align-items: center;
+            margin-top: 18px;
+            font-size: 14px;
+        }
+        .feed-pagination a {
+            color: var(--ig-primary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+{% endblock %}
+
 {% block auth_content %}
-<p class="auth-alt">Feed placeholder — the real feed arrives in a later change.</p>
+<div class="feed-header">
+    <span class="feed-title">Instagram</span>
+    <form method="post" action="{% url 'web:post-create' %}">
+        {% csrf_token %}
+        <button class="auth-button feed-create" type="submit">Create post</button>
+    </form>
+</div>
+<div class="post-grid" id="post-grid">
+    {% for post in posts %}
+        {% include "web/post_card.html" %}
+    {% empty %}
+        <p class="feed-empty">No posts yet — create your first post!</p>
+    {% endfor %}
+</div>
+<nav class="feed-pagination" aria-label="Feed pagination">
+    {% if prev_page %}<a href="?page={{ prev_page }}">Previous</a>{% endif %}
+    <span>Page {{ page }}</span>
+    {% if next_page %}<a href="?page={{ next_page }}">Next</a>{% endif %}
+</nav>
 {% endblock %}

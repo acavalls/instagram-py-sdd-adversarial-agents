@@ -22,20 +22,24 @@ from apps.accounts.use_cases import (
     RegisterUserInput,
     RegisterUserUseCase,
 )
+from apps.posts.use_cases import ListPostsInput, ListPostsUseCase
+from apps.web.post_views import FEED_PAGE_URL, current_user
 
 # The login view is implemented in a later task group; the literal keeps this
 # group self-contained (it matches LOGIN_URL in the settings).
 LOGIN_PAGE_URL = "/web/login/"
-# The feed page belongs to a later change (posts/feed); for this change a
-# minimal login-required placeholder view satisfies LOGIN_REDIRECT_URL and the
-# "Protected pages require login" scenario.
-FEED_PAGE_URL = "/web/feed/"
+# FEED_PAGE_URL ("/web/feed/") lives in apps/web/post_views.py (posts web
+# layer); the feed page renders the logged-in user's own posts and becomes
+# the followed-users feed in a later change.
 
 REGISTRATION_SUCCESS_TOAST = "Account created successfully. Please login."
 
 LOGIN_SUCCESS_TOAST = "Logged in successfully"
 
 LOGOUT_SUCCESS_TOAST = "You have been logged out"
+
+# Page size of the personal feed window (posts spec: Post listing).
+FEED_PAGE_SIZE = 10
 
 # Same message the API path reports (DRF EmailField default, serializers.py)
 # so both registration locations answer with identical wording.
@@ -115,5 +119,24 @@ def logout(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def feed(request: HttpRequest) -> HttpResponse:
-    """Placeholder feed page (the real feed belongs to a later change)."""
-    return render(request, "web/feed.html")
+    """Personal feed page: the logged-in user's own posts as post cards,
+    newest first, with a simple page-based limit/offset window (posts spec:
+    Post listing — Personal feed on the feed page; user-accounts delta:
+    Authenticated landing placeholder)."""
+    try:
+        page = int(request.GET.get("page", "1"))
+    except ValueError:
+        page = 1
+    page = max(page, 1)
+    offset = (page - 1) * FEED_PAGE_SIZE
+    output = ListPostsUseCase().execute(
+        ListPostsInput(user=current_user(request), limit=FEED_PAGE_SIZE, offset=offset)
+    )
+    context = {
+        "posts": output.posts,
+        "page": page,
+        "prev_page": page - 1 if page > 1 else None,
+        # A full window implies there may be more posts on the next page.
+        "next_page": page + 1 if len(output.posts) == FEED_PAGE_SIZE else None,
+    }
+    return render(request, "web/feed.html", context)
