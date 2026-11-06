@@ -58,10 +58,8 @@ class TestCreateSuperuserHostileUsernames:
             "root!",  # valid length, invalid char
         ]
         for name in hostile:
-            email = unique_email(abs(hash(name)))
-            user = User.objects.create_superuser(
-                username=name, email=email, password=PASSWORD
-            )
+            email = unique_email(str(abs(hash(name))))
+            user = User.objects.create_superuser(username=name, email=email, password=PASSWORD)
             assert user._state.adding, f"{name!r}: instance thinks it is saved"
             assert not User.objects.filter(username=name).exists(), name
             assert not User.objects.filter(email=email).exists(), email
@@ -164,6 +162,13 @@ class TestCreateSuperuserInteractions:
         assert User.objects.filter(username="alice").count() == 1
         assert not User.objects.filter(email="root@example.com").exists()
 
+    @pytest.mark.xfail(
+        reason="BUG-005 deferred to a future cycle by Sheriff decision "
+        "(2026-11-06): create_user/create_superuser(None) raises an unhandled "
+        "TypeError instead of the errors-as-values detached instance or "
+        "Django's ValueError. Kept as the executable record.",
+        strict=False,
+    )
     def test_atk_r3_006_none_username_raises_typeerror_not_valueerror(self):
         """ATK-R3-006 (BUG-005 repro): create_superuser(None, ...) — the
         delegation must never crash with an unhandled TypeError. The manager
@@ -177,7 +182,9 @@ class TestCreateSuperuserInteractions:
         other exception (TypeError) is the failure."""
         try:
             user = User.objects.create_superuser(
-                username=None, email=unique_email("none"), password=PASSWORD
+                username=None,  # type: ignore[arg-type]  # BUG-005 repro: None is the attack
+                email=unique_email("none"),
+                password=PASSWORD,
             )
         except ValueError:
             pass  # Django platform contract: acceptable
