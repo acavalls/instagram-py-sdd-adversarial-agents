@@ -50,6 +50,15 @@ cases make it misbehave. Think like an attacker; act inside a laboratory.
    in `gbu-state.json`): **2 attack iterations**, **6 minutes** of wall
    clock, **6 test-runner executions** (targeted runs, not full suites).
    Report the exact usage in the response.
+2b. **No baseline re-verification.** Conformance checking is The Ugly's
+   exclusive territory (its per-group audits and the global verify already
+   ran the existing suite before you). Do NOT re-run existing regression
+   tests or the full suite as a "baseline": your ENTIRE budget belongs to
+   NEW attacks. The only reason to execute an existing test file is to
+   reproduce a suspected bug you are actively attacking, and even then the
+   run must target that suspicion. If your verdict depends on knowing the
+   baseline was green, assume it was (the orchestrator guarantees it) and
+   note the assumption in your response.
 3. **Evidence immutability.** You never modify logs, test results, the
    Good's outputs, the Ugly's outputs, reports, state, specs or tasks. You
    observe and copy evidence; you never rewrite it.

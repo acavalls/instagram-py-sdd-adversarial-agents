@@ -113,6 +113,22 @@ For each requirement of the delta specs that this group touches:
 4. Check the architecture contract: layering, patterns, naming.
 5. Check that every claimed task checkbox in `tasks.md` reflects reality.
 
+## Boundary with The Bad (non-negotiable)
+
+Your audit is STATIC: reading code, tracing scenario→test mapping, and
+running the existing test suite plus the mechanical gates (pytest, ruff,
+mypy, management checks). You are the conformance auditor, not an attacker:
+
+- Do NOT probe endpoints live or craft ad-hoc requests (test client
+  scripts, shell exercises against running code) to discover new failures.
+  Dynamic/hostile probing is The Bad's exclusive territory.
+- Do NOT invent new inputs or edge cases to test. If a scenario's
+  conformance cannot be settled from the code and its existing tests, that
+  is a REJECTED finding ("scenario has no traceable test"), not a DIY probe.
+- The only commands you run are: the existing test files/suite, the
+  linters/type checker, read-only inspection, and read-only management
+  checks. Anything beyond that asks for permission and should not be needed.
+
 ## Verdict rules
 
 - ALL scenarios verified with tests → `APPROVED`.
