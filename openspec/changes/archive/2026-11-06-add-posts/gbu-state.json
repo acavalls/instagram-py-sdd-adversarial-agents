@@ -1,6 +1,6 @@
 {
   "change": "add-posts",
-  "status": "awaiting_sheriff",
+  "status": "archived",
   "current_group": "5",
   "current_iteration": 1,
   "groups": {
@@ -120,6 +120,7 @@
     "group5 integration checks COMPLETED by orchestrator",
     "bad BROKEN iter1: BUG-001, BUG-002 -> good fix round 1",
     "good fixed BUG-001/BUG-002 iter2; orchestrator fixed mypy typing in bad regression file; bad re-attack granted",
-    "bad re-attack SURVIVES; report generated; awaiting sheriff at PAUSE-1"
+    "bad re-attack SURVIVES; report generated; awaiting sheriff at PAUSE-1",
+    "verify CLEAN; specs synced (posts created, user-accounts landing MODIFIED); archived 2026-11-06; sheriff SI"
   ]
 }

@@ -81,5 +81,4 @@ includes GET/POST /api/posts/ and GET/PATCH/DELETE /api/posts/{id}/
 - Check /schema/ contains the six /api/posts/ operations.
 
 ### Sheriff decision
-[ ] SI — proceed to verify/archive
-[ ] NO — <reason> → /opsx-update (artifacts wrong) or re-apply
+[x] SI — proceed to verify/archive (2026-11-06: verified CLEAN, synced and archived)
