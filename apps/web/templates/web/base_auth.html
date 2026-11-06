@@ -1,0 +1,114 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Instagram{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ig-primary: #0095f6;
+            --ig-border: #dbdbdb;
+            --ig-text: #262626;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "Poppins", sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+        }
+        .auth-card {
+            background: #fff;
+            width: 100%;
+            max-width: 380px;
+            padding: 40px 36px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+        .auth-logo {
+            font-family: "Grand Hotel", cursive;
+            font-size: 42px;
+            font-weight: 400;
+            text-align: center;
+            color: var(--ig-text);
+            margin-bottom: 24px;
+        }
+        .auth-field {
+            width: 100%;
+            padding: 10px 12px;
+            background: #fafafa;
+            border: 1px solid var(--ig-border);
+            border-radius: 6px;
+            font-size: 14px;
+            color: var(--ig-text);
+            margin-bottom: 10px;
+        }
+        .auth-field:focus {
+            outline: none;
+            border-color: #a8a8a8;
+        }
+        .auth-button {
+            width: 100%;
+            padding: 10px;
+            background: var(--ig-primary);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+        .toast {
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        .toast.success {
+            background: #d1e7dd;
+            color: #0f5132;
+        }
+        .toast.error {
+            background: #f8d7da;
+            color: #842029;
+        }
+        .auth-alt {
+            text-align: center;
+            font-size: 14px;
+            color: var(--ig-text);
+            margin-top: 18px;
+        }
+        .auth-alt a {
+            color: var(--ig-primary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        {% block extra_style %}{% endblock %}
+    </style>
+</head>
+<body>
+    <main class="auth-card">
+        <h1 class="auth-logo">Instagram</h1>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="toast {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% block auth_content %}{% endblock %}
+    </main>
+</body>
+</html>

@@ -1,0 +1,90 @@
+{% extends "web/base_auth.html" %}
+
+{% block title %}Log in · Instagram{% endblock %}
+
+{% block extra_style %}
+        .auth-card.login-card {
+            max-width: 720px;
+            padding: 32px 40px;
+        }
+        .login-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+        }
+        .phone-mockup {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .phone-frame {
+            width: 220px;
+            height: 400px;
+            border: 8px solid var(--ig-text);
+            border-radius: 32px;
+            background: #fff;
+            overflow: hidden;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+        }
+        .phone-screen {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            padding: 24px 12px;
+            background: linear-gradient(180deg, #fdf1f0 0%, #e7f0fd 100%);
+        }
+        .phone-logo {
+            font-family: "Grand Hotel", cursive;
+            font-size: 28px;
+            color: var(--ig-text);
+        }
+        .phone-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            width: 100%;
+        }
+        .phone-grid div {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            background: linear-gradient(135deg, #f09433, #dc2743, #bc1888);
+            opacity: 0.85;
+        }
+        @media (max-width: 640px) {
+            .login-columns {
+                grid-template-columns: 1fr;
+            }
+            .phone-mockup {
+                display: none;
+            }
+        }
+{% endblock %}
+
+{% block auth_content %}
+<div class="login-columns">
+    <div class="phone-mockup" aria-hidden="true">
+        <div class="phone-frame">
+            <div class="phone-screen">
+                <span class="phone-logo">Instagram</span>
+                <div class="phone-grid">
+                    <div></div><div></div><div></div>
+                    <div></div><div></div><div></div>
+                    <div></div><div></div><div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <form method="post" action="{% url 'web:login' %}" novalidate>
+        {% csrf_token %}
+        <input class="auth-field" type="text" name="username" placeholder="Username"
+               value="{{ username }}" required>
+        <input class="auth-field" type="password" name="password" placeholder="Password"
+               required>
+        <button class="auth-button" type="submit">Log in</button>
+    </form>
+</div>
+<p class="auth-alt">Don't have an account? <a href="{% url 'web:register' %}">Sign up</a></p>
+{% endblock %}

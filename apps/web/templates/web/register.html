@@ -1,0 +1,17 @@
+{% extends "web/base_auth.html" %}
+
+{% block title %}Sign up · Instagram{% endblock %}
+
+{% block auth_content %}
+<form method="post" action="{% url 'web:register' %}" novalidate>
+    {% csrf_token %}
+    <input class="auth-field" type="text" name="username" placeholder="Username"
+           value="{{ username }}" required>
+    <input class="auth-field" type="email" name="email" placeholder="Email"
+           value="{{ email }}" required>
+    <input class="auth-field" type="password" name="password"
+           placeholder="Password (min. 8 characters)" required>
+    <button class="auth-button" type="submit">Sign up</button>
+</form>
+<p class="auth-alt">Have an account? <a href="/web/login/">Log in</a></p>
+{% endblock %}
