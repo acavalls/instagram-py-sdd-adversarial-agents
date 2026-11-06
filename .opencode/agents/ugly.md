@@ -3,7 +3,17 @@ description: "GBU auditor: audits one implemented task group against its delta-s
 mode: subagent
 permission:
   edit: deny
-  bash: ask
+  bash:
+    "*": ask
+    "pytest *": allow
+    "python *": allow
+    "ruff *": allow
+    "mypy *": allow
+    "git status *": allow
+    "git diff *": allow
+    "git log *": allow
+    "ls *": allow
+    "cat *": allow
 temperature: 0.3
 ---
 
