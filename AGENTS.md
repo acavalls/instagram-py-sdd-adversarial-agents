@@ -44,10 +44,11 @@ explicit user request.
 
 All artifacts, specs, commits, documentation and code in English.
 
-## 4. Reference implementation
+## 4. Spec-driven inputs only
 
-The reference app lives at `/home/ale/mapfre/personal/django_ig`. Ground
-requirements and designs in its real code (apps by domain: `accounts`,
-`social`, `posts`, `api`, `web`; Clean Architecture layers:
-views → use_cases → services → models). Never invent requirements the
-reference app does not have without flagging the deviation.
+Requirements and designs come exclusively from artifacts inside this
+repository: `openspec/` (config, living specs, change artifacts) and the
+requirements snapshots in `spec-ref/`. NEVER read implementation code from
+outside this repository — no previous or reference implementation of this
+app, no other project. The implementation MUST be generated from the specs;
+if something seems to require external code, stop and ask the user.

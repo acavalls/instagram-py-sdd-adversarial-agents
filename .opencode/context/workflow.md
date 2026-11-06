@@ -65,19 +65,20 @@ same mechanism): ask the user before writing anything.
 1. **Propose** (`/opsx-propose <change-name> <description>`):
    `openspec new change` → `openspec status --change <name> --json` →
    `openspec instructions <artifact> --change <name> --json` per artifact,
-   inspecting the reference codebase (`/home/ale/mapfre/personal/django_ig`)
-   before drafting. Delta spec format: `## Purpose` for new capabilities;
-   `## ADDED/MODIFIED/REMOVED Requirements`; `### Requirement:` with
-   MUST/SHALL; scenarios as `#### Scenario:` with WHEN/THEN bullets
-   (exactly 4 hashtags); every requirement needs at least one scenario.
+   grounded exclusively in this repository's OpenSpec artifacts and the
+   requirements snapshots in `spec-ref/`. Delta spec format: `## Purpose`
+   for new capabilities; `## ADDED/MODIFIED/REMOVED Requirements`;
+   `### Requirement:` with MUST/SHALL; scenarios as `#### Scenario:` with
+   WHEN/THEN bullets (exactly 4 hashtags); every requirement needs at least
+   one scenario.
 
 2. **Ambiguities — auto-resolved, never delegated to the user.** The agent
    resolves every business decision itself, choosing the reasonable
-   alternative (parity with the reference app is the default tie-breaker),
-   and documents each decision in `design.md` (or `proposal.md`) as
-   "Decision: ... (agent-decided, flagged for review)". The decisions are
-   listed in the report so the user can overturn any of them later with
-   `/opsx-update`. Do not pause for ambiguity questions.
+   alternative (the requirements snapshots in `spec-ref/` are the default
+   tie-breaker), and documents each decision in `design.md` (or
+   `proposal.md`) as "Decision: ... (agent-decided, flagged for review)".
+   The decisions are listed in the report so the user can overturn any of
+   them later with `/opsx-update`. Do not pause for ambiguity questions.
 
 3. **Validate**: `openspec validate <change-name>`.
 
@@ -259,7 +260,8 @@ Consumers: the Sheriff (decides SI/NO at PAUSE-1), the stage 7.B Ugly
   an OpenSpec change; behavior not described in `openspec/specs/` is a
   defect.
 - All artifacts, specs, commits and documentation in English.
-- Reference implementation for grounding requirements:
-  `/home/ale/mapfre/personal/django_ig` (apps organized by domain:
-  `accounts`, `social`, `posts`, `api`, `web`; Clean Architecture layers
-  views → use_cases → services → models).
+- Spec-driven inputs only (AGENTS.md rule 4): propose and apply read
+  exclusively this repository's OpenSpec artifacts, `openspec/config.yaml`,
+  the requirements snapshots in `spec-ref/` and the project skills in
+  `.opencode/skills/`. NEVER read implementation code from outside this
+  repository; if something seems to require it, stop and ask the user.
