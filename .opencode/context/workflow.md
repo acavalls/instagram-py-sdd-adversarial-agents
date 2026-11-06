@@ -99,7 +99,11 @@ same mechanism): ask the user before writing anything.
    - After the last group: 🌵 Bad attacks the whole change surface once
      (budget in `gbu-state.json`).
      - SURVIVES → apply done.
-     - BROKEN → Good fixes the bugs (iteration ≤ 3) → Bad re-attacks.
+     - BROKEN (only blocking bugs: severity CRITICAL/HIGH violating a
+       delta/living-spec requirement, per the Severity policy in
+       `bad.md`) → Good fixes the bugs (iteration ≤ 3) → Bad re-attacks.
+     - Non-blocking findings (severity MEDIUM and below) never trigger a
+       fix loop: they are recorded in `gbu-report.md` as observations.
      - ESCALATION or BUDGET_EXHAUSTED → STOP and ask the user.
    - Update `gbu-state.json` after every step (resume capability).
    - Finish with the full quality gates: pytest (all pass), coverage >=
@@ -174,9 +178,9 @@ their contract is `openspec/config.yaml` + the change's `design.md`.
 - **Budgets** (defaults; adjustable in `gbu-state.json`, to be calibrated
   after the first real project):
   - Good↔Ugly per group: max **3** iterations.
-  - Bad attack iterations: max **3**.
-  - Bad wall clock: **10 minutes** per cycle.
-  - Bad test-runner executions: **10** targeted runs (never full suites —
+  - Bad attack iterations: max **2**.
+  - Bad wall clock: **6 minutes** per cycle.
+  - Bad test-runner executions: **6** targeted runs (never full suites —
     full suites belong to the quality gates).
   - Any budget exhausted before delivering evidence is reported as
     `BUDGET_EXHAUSTED` → STOP and ask the user (never treated as "code is
@@ -221,7 +225,9 @@ pytest N/N passed · coverage N% (target >= 80) · ruff: 0 issues · mypy: 0 err
 ### Adversarial pass (The Bad)
 - ATK-001 <attack> → survived / bug BUG-00N found → fixed → regression
   test <name> added to the suite
-- Budget: X min used, Y test runs (limits: 10 min, 10 runs, 3 iterations)
+- Non-blocking observations: <one-line MEDIUM findings with repro, or
+  "none">
+- Budget: X min used, Y test runs (limits: 6 min, 6 runs, 2 iterations)
 
 ### Deviations and assumptions
 <each documented by Good, with impact>
