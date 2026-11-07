@@ -41,9 +41,11 @@ def test_successful_logout(client, alice):
 
 
 def test_get_logout_no_longer_logs_out(client, alice):
-    """Logout is POST-only (Django's CSRF recommendation): a GET request must
-    answer 405 without touching the session, so a pre-fetched/logout-via-link
-    GET cannot end the user's session."""
+    """Spec scenario 'Logout is POST-only' (Web session logout,
+    openspec/changes/regularize-social-drifts/specs/user-accounts/spec.md):
+    a GET request must answer 405 without touching the session (Django's
+    CSRF recommendation), so a pre-fetched/logout-via-link GET cannot end
+    the user's session."""
     client.force_login(alice)
     assert "_auth_user_id" in client.session
 

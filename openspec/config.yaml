@@ -8,7 +8,7 @@ context: |
   a REST API and an HTMX web UI.
 
   Fixed stack (not renegotiated in proposals):
-  - Backend: Python 3.12 with Django 5+ and Django REST Framework.
+  - Backend: Python 3.12 with Django 6+ and Django REST Framework.
     SQLite in development (single file; enough for this project).
   - API auth: JWT via djangorestframework-simplejwt; OpenAPI schema and
     Swagger UI via drf-spectacular. Web auth: Django sessions.
