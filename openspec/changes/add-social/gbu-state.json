@@ -1,0 +1,177 @@
+{
+  "change": "add-social",
+  "status": "ATTACK_SURVIVED",
+  "current_group": "done",
+  "current_iteration": 1,
+  "groups": {
+    "1": {
+      "tasks": [
+        "1.1",
+        "1.2"
+      ],
+      "good": {
+        "status": "COMPLETED",
+        "iteration": 1,
+        "tests": "3 passed (social models); full 262 passed/2 xfail, cov 99.40%"
+      },
+      "ugly": {
+        "status": "APPROVED",
+        "iteration": 1
+      }
+    },
+    "2": {
+      "tasks": [
+        "2.1",
+        "2.2",
+        "2.3"
+      ],
+      "good": {
+        "status": "COMPLETED",
+        "iteration": 1,
+        "tests": "275 passed, 2 xfailed; cov 99.44%"
+      },
+      "ugly": {
+        "status": "APPROVED",
+        "iteration": 1
+      }
+    },
+    "3": {
+      "tasks": [
+        "3.1",
+        "3.2",
+        "3.3"
+      ],
+      "good": {
+        "status": "COMPLETED",
+        "iteration": 1,
+        "tests": "26 passed apps/social; full 285 passed/2 xfail"
+      },
+      "ugly": {
+        "status": "APPROVED",
+        "iteration": 1
+      }
+    },
+    "4": {
+      "tasks": [
+        "4.1",
+        "4.2",
+        "4.3"
+      ],
+      "good": {
+        "status": "COMPLETED",
+        "iteration": 1,
+        "tests": "291 passed, 2 xfailed"
+      },
+      "ugly": {
+        "status": "APPROVED",
+        "iteration": 1
+      }
+    },
+    "5": {
+      "tasks": [
+        "5.1",
+        "5.2",
+        "5.3"
+      ],
+      "good": {
+        "status": "COMPLETED",
+        "iteration": 1,
+        "tests": "301 passed, 2 xfailed"
+      },
+      "ugly": {
+        "status": "APPROVED",
+        "iteration": 1
+      }
+    },
+    "6": {
+      "tasks": [
+        "6.1",
+        "6.2",
+        "6.3"
+      ],
+      "good": {
+        "status": "COMPLETED",
+        "iteration": 1,
+        "tests": "309 passed, 2 xfailed; cov 99.53%"
+      },
+      "ugly": {
+        "status": "APPROVED",
+        "iteration": 1
+      }
+    },
+    "7": {
+      "tasks": [
+        "7.1",
+        "7.2"
+      ],
+      "good": {
+        "status": "COMPLETED",
+        "iteration": 1,
+        "tests": "317 passed, 2 xfailed; cov 99.55%"
+      },
+      "ugly": {
+        "status": "APPROVED",
+        "iteration": 1
+      }
+    },
+    "8": {
+      "tasks": [
+        "8.1"
+      ],
+      "good": {
+        "status": "COMPLETED",
+        "iteration": 1,
+        "tests": "test existed; traceability docstring added; 1 passed"
+      },
+      "ugly": {
+        "status": "APPROVED",
+        "iteration": 1
+      }
+    },
+    "9": {
+      "tasks": [
+        "9.1",
+        "9.2"
+      ],
+      "good": {
+        "status": "COMPLETED",
+        "iteration": 1,
+        "tests": "323 passed, 2 xfailed"
+      },
+      "ugly": {
+        "status": "APPROVED",
+        "iteration": 1
+      }
+    }
+  },
+  "bad": {
+    "status": "SURVIVES",
+    "iteration": 1,
+    "minutes_used": 4,
+    "test_runs_used": 5,
+    "max_iterations": 2,
+    "wall_clock_minutes": 6,
+    "test_runs_limit": 6,
+    "test_runs_used_total": 5
+  },
+  "log": [
+    "group1 good iter1: COMPLETED",
+    "group1 ugly iter1: APPROVED",
+    "group2 good iter1: COMPLETED",
+    "group2 ugly iter1: APPROVED",
+    "group3 good iter1: COMPLETED",
+    "group3 ugly iter1: APPROVED",
+    "group4 good iter1: COMPLETED",
+    "group4 ugly iter1: APPROVED",
+    "group5 good iter1: COMPLETED",
+    "group5 ugly iter1: APPROVED",
+    "group6 good iter1: COMPLETED",
+    "group6 ugly iter1: APPROVED",
+    "group7 good iter1: COMPLETED",
+    "group7 ugly iter1: APPROVED",
+    "group8 ugly iter1: APPROVED (pre-existing test verified, docstring traceability only)",
+    "group9 good iter1: COMPLETED",
+    "group9 ugly iter1: APPROVED \u2014 all 9 groups complete; next: Bad whole-change attack",
+    "bad iter1: SURVIVES \u2014 34 attacks, 0 blocking bugs, 1 MEDIUM + 3 LOW observations; only new test files added (verified)"
+  ]
+}
