@@ -13,7 +13,9 @@ everything social (follows, feed of followed users, stories) builds on it.
 The system SHALL store a post with a UUID identifier, an owner, an optional
 caption of at most 2200 characters, and creation/update timestamps. The
 system SHALL store post media as up to 10 ordered files attached to a post,
-each with a media type (image or video) and a zero-based order.
+each with a media type (image or video) and a zero-based order. Posts SHALL
+be listed newest first with a deterministic order (creation date descending,
+then identifier descending) so pagination windows are stable.
 
 #### Scenario: Post persisted with media
 - **GIVEN** a user creates a post with a caption and media files
@@ -27,7 +29,9 @@ each with a media type (image or video) and a zero-based order.
 The system SHALL allow a logged-in user to create a post with an optional
 caption and up to 10 media files. From the web UI, the system SHALL create
 the post with a generated placeholder image when no file is provided. The
-system MUST NOT require media for a post to be valid.
+system MUST NOT require media for a post to be valid. The API SHALL trim
+surrounding whitespace from captions; a caption that is empty after
+trimming is stored as the empty string.
 
 #### Scenario: Successful web creation
 - **WHEN** a logged-in user requests post creation from the web UI
@@ -41,23 +45,28 @@ system MUST NOT require media for a post to be valid.
 - **WHEN** a client posts more than 10 media files to `POST /api/posts/`
 - **THEN** the system responds 400 with a validation error
 
+#### Scenario: Whitespace-only caption becomes empty
+- **WHEN** a client posts a caption consisting only of whitespace to `POST /api/posts/`
+- **THEN** the system stores the caption as the empty string
+
 ### Requirement: Post listing
 The system SHALL list a user's own posts ordered by creation date, newest
 first, with limit/offset pagination through `GET /api/posts/` and the
 owner's profile grid. The home page SHALL show posts from the users the
 logged-in user follows (defined in the social capability) instead of their
-own posts.
+own posts. Post cards SHALL show the post's first media file together with
+the caption, owner and timestamp.
 
 #### Scenario: Personal feed on the feed page
 - **WHEN** a logged-in user visits the home page
-- **THEN** the system shows posts from the users they follow as post cards (media, caption, owner, timestamp), newest first
+- **THEN** the system shows posts from the users they follow as post cards (first media file, caption, owner, timestamp), newest first
 
 #### Scenario: API list of own posts
 - **WHEN** a client requests `GET /api/posts/` with optional limit and offset
 - **THEN** the system responds 200 with the authenticated user's own posts, newest first
 
 #### Scenario: Pagination window
-- **WHEN** a user has more posts than the page size
+- **WHEN** a listing has more posts than the page size
 - **THEN** the system returns only the requested window (limit/offset) without duplicates across pages
 
 ### Requirement: Post detail
@@ -76,7 +85,7 @@ identifier MUST respond 404.
 The system SHALL allow the owner of a post to update its caption. A
 non-owner MUST receive 403 with the error "You can only edit your own
 posts". From the web UI, the caption edit SHALL be an inline form that
-updates the post without leaving the feed grid and confirms with the
+updates the post without leaving the profile grid and confirms with the
 toast "Post updated!".
 
 #### Scenario: Owner updates caption via API
@@ -88,7 +97,7 @@ toast "Post updated!".
 - **THEN** the system responds 403 with the error "You can only edit your own posts"
 
 #### Scenario: Inline web edit
-- **WHEN** the owner submits the inline edit form on the feed grid
+- **WHEN** the owner submits the inline edit form on the profile grid
 - **THEN** the system updates the caption, closes the form and shows the toast "Post updated!"
 
 #### Scenario: Cancel inline edit
@@ -99,7 +108,7 @@ toast "Post updated!".
 The system SHALL allow the owner of a post to delete it, removing its media
 with it. A non-owner MUST receive 403 with the error "You can only delete
 your own posts". From the web UI, deletion SHALL remove the post from the
-grid and confirm with the toast "Post deleted!".
+profile grid and confirm with the toast "Post deleted!".
 
 #### Scenario: Owner deletes post via API
 - **WHEN** the owner sends `DELETE /api/posts/<uuid>/`
@@ -110,7 +119,7 @@ grid and confirm with the toast "Post deleted!".
 - **THEN** the system responds 403 with the error "You can only delete your own posts"
 
 #### Scenario: Web deletion removes the card
-- **WHEN** the owner deletes a post from the feed grid
+- **WHEN** the owner deletes a post from the profile grid
 - **THEN** the system removes the post card from the grid and shows the toast "Post deleted!"
 
 ### Requirement: Post visibility
