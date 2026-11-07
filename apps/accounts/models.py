@@ -34,16 +34,93 @@ USERNAME_ALPHANUMERIC_VALIDATOR = RegexValidator(
 )
 
 
-class UserManager(DjangoUserManager["User"]):
-    """User manager that keeps the username rule un-bypassable (DRIFT-002).
+class UserQuerySet(models.QuerySet["User"]):
+    """QuerySet that keeps the username rule un-bypassable on bulk writes.
+
+    ``QuerySet.update()``, ``bulk_create()`` and ``bulk_update()`` never
+    call ``Model.save()``
+    (Django semantics), so without this override a hostile username would
+    be stored through them despite the ``User.save`` guard. These overrides
+    run the same ``validate_username_format`` rule and raise the same
+    ``ValidationError`` shape (``{"username": [error]}``) used everywhere
+    else in this app. Non-literal values (e.g. ``F()``/``Combinable``
+    expressions) have no text to validate, so the write that carries them
+    is refused with the model's username ``ValidationError`` (the whole
+    ``update()`` call writes nothing) rather than persisting an unvalidated
+    username (BUG-R002, orchestrator adjudication 2026-11-07).
+    """
+
+    def update(self, **kwargs: Any) -> int:
+        if "username" in kwargs:
+            username = kwargs["username"]
+            if isinstance(username, str):
+                error = User.validate_username_format(username)
+                if error is not None:
+                    raise ValidationError({"username": [error]})
+            else:
+                # Non-literal (e.g. ``F("first_name")``): the username rule
+                # cannot be validated statically on a value that only exists
+                # in the database, so the write is refused with the model's
+                # username error instead of storing an unvalidated username.
+                # The length error is the appropriate shape for a value with
+                # no string (same error ``create_user(None)`` raises).
+                raise ValidationError({"username": [USERNAME_LENGTH_ERROR]})
+        return super().update(**kwargs)
+
+    def bulk_update(self, objs: Any, fields: Any, *args: Any, **kwargs: Any) -> Any:
+        """Validate every object's username before the batched write (F-04).
+
+        ``QuerySet.bulk_update()`` never calls ``Model.save()`` (Django
+        semantics), so without this override a hostile in-memory username
+        could be persisted through the batched CASE-WHEN SQL UPDATE. Every
+        object's username is validated *before* calling ``super()``, so a
+        single violating object refuses the whole batch atomically (nothing
+        is written). The same contract as ``update()`` applies: literal
+        strings run the shared ``validate_username_format`` rule; non-str
+        values have no text to validate and are refused with the model's
+        username ``ValidationError`` (BUG-R002 adjudication).
+        """
+        if fields and "username" in fields:
+            for obj in objs:
+                if isinstance(obj.username, str):
+                    error = User.validate_username_format(obj.username)
+                    if error is not None:
+                        raise ValidationError({"username": [error]})
+                else:
+                    # Non-literal (e.g. ``None``): same adjudicated semantics
+                    # as ``update()`` — refused with the model's username
+                    # error instead of writing an unvalidated username.
+                    raise ValidationError({"username": [USERNAME_LENGTH_ERROR]})
+        return super().bulk_update(objs, fields, *args, **kwargs)
+
+    def bulk_create(self, objs: Any, *args: Any, **kwargs: Any) -> Any:
+        """Validate every object's username before the DB write (F-04).
+
+        Typed loosely (``Any``) on purpose: the project's django-stubs version
+        leaves ``QuerySet`` subclasses generic, so a strictly typed override
+        cannot stay compatible with ``QuerySet.bulk_create``.
+        """
+        for obj in objs:
+            if isinstance(obj.username, str):
+                error = User.validate_username_format(obj.username)
+                if error is not None:
+                    raise ValidationError({"username": [error]})
+        return super().bulk_create(objs, *args, **kwargs)
+
+
+class UserManagerBase(DjangoUserManager["User"]):
+    """User manager base that keeps the username rule un-bypassable (DRIFT-002).
 
     ``BaseUserManager.create_user`` never runs field validators or
     ``full_clean()``, so without this override the shell/fixtures path
     (``create_user``/``create_superuser``) would persist a hostile username.
     Following the project's errors-as-values style (design decision 6), an
-    invalid username neither raises nor persists: a detached instance is
-    returned and nothing is written. The instance cannot leak into storage
-    later either — ``User.save`` below refuses to persist it.
+    invalid *string* username neither raises nor persists: a detached
+    instance is returned and nothing is written. The instance cannot leak
+    into storage later either — ``User.save`` below refuses to persist it.
+    A *non-string* username (``None``) has no format to validate and raises
+    the model's username validation error instead of an opaque ``TypeError``
+    from ``len(None)`` (BUG-005).
     """
 
     def create_user(
@@ -53,6 +130,8 @@ class UserManager(DjangoUserManager["User"]):
         password: str | None = None,
         **extra_fields: Any,
     ) -> "User":
+        if not isinstance(username, str):
+            raise ValidationError({"username": [USERNAME_LENGTH_ERROR]})
         if User.validate_username_format(username) is not None:
             # Detached (never persisted) instance; ``User.save`` would still
             # refuse to store it if a caller ever tried.
@@ -88,6 +167,18 @@ class UserManager(DjangoUserManager["User"]):
         if extra_fields.get("is_superuser") is not True:
             raise ValueError("Superuser must have is_superuser=True.")
         return self.create_user(username, email, password, **extra_fields)
+
+
+class UserManager(UserManagerBase.from_queryset(UserQuerySet)):  # type: ignore[misc]
+    """User manager with the username rule on EVERY storage path.
+
+    Combines ``UserManagerBase`` (creation paths: ``create_user``/
+    ``create_superuser``) with ``UserQuerySet`` (bulk writes: ``update()``/
+    ``bulk_create()``) via Django's standard ``from_queryset`` pattern, so
+    the class keeps the importable name ``apps.accounts.models.UserManager``
+    used by existing migrations. The ``type: ignore`` covers mypy's
+    "unsupported dynamic base class" for the ``from_queryset`` idiom.
+    """
 
 
 class User(AbstractUser):

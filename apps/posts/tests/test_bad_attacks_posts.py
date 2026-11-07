@@ -110,6 +110,9 @@ def test_atk003c_patch_caption_2201_is_rejected(api_client):
 
 
 def test_atk003d_whitespace_only_caption_is_normalized(api_client):
+    """Spec scenario 'Whitespace-only caption becomes empty' (Post creation,
+    openspec/changes/regularize-social-drifts/specs/posts/spec.md): a caption
+    consisting only of whitespace is stored as the empty string."""
     alice = make_user("alice")
     auth_client(api_client, alice)
 

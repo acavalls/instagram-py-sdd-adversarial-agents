@@ -134,9 +134,11 @@ def test_api_login_with_missing_fields(api_client):
 
 
 def test_password_with_surrounding_spaces_round_trips_api(api_client):
-    """The API never trims the password (DRIFT-012): a password registered
+    """Spec scenario 'Password comparison is byte-exact' (User account data,
+    openspec/changes/regularize-social-drifts/specs/user-accounts/spec.md).
+    The API never trims the password (DRIFT-012): a password registered
     with surrounding spaces is stored byte-exactly and only authenticates
-    with those same spaces."""
+    with those same spaces — the trimmed variant fails at login."""
     padded_password = " sup3r-secret-pw "
 
     register = api_client.post(

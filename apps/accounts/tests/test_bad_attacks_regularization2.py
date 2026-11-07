@@ -16,7 +16,6 @@ design.md (errors-as-values for create_user).
 
 import pytest
 from django.core.exceptions import ValidationError
-from django.db import transaction
 from rest_framework.test import APIClient
 
 from apps.accounts.models import User
@@ -145,24 +144,32 @@ class TestUserManagerFixAttacks:
         user.email = "alice+ok@example.com"
         user.save(update_fields=["email"])
 
-    @pytest.mark.xfail(strict=False, reason="documented bypass (see docstring)")
-    def test_atk_r2_005_queryset_update_and_bulk_create_bypass_model_rule(self):
-        """ATK-R2-005 (observation, NOT charged as a bug): queryset-level
-        writes (.update(), bulk_create()) skip Model.save() and the field
-        validators by Django design; the change's stated scope is the
-        creation paths (create_user/create_superuser/bare save/forms), not a
-        DB-level CHECK constraint. This test asserts the IDEAL (rule holds)
-        and is expected to fail (xfail) today; it would xpass if The Good
-        later adds a DB-level guard."""
+    def test_atk_r2_005_queryset_update_and_bulk_create_enforce_model_rule(self):
+        """ATK-R2-005 (fixed by regularize-social-drifts, task 2.1 — design
+        decision 4): queryset-level writes (.update(), bulk_create()) skip
+        Model.save() by Django design, so the custom UserQuerySet now runs
+        the same username-format validation as User.save(). A hostile
+        username is rejected with ValidationError (the model's error shape)
+        and never stored; the stored value of an existing user stays intact.
+        Valid bulk writes are unaffected."""
         user = make_ref_user()
-        User.objects.filter(pk=user.pk).update(username="bad name!")
+        with pytest.raises(ValidationError):
+            User.objects.filter(pk=user.pk).update(username="bad name!")
         user.refresh_from_db()
-        assert user.username != "bad name!"  # fails today -> xfail
-        with transaction.atomic():
+        assert user.username == "alice"
+        assert not User.objects.filter(username="bad name!").exists()
+
+        with pytest.raises(ValidationError):
             User.objects.bulk_create(
                 [User(username="bad name!", email="bulk@example.com", password=PASSWORD)]
             )
-        assert not User.objects.filter(email="bulk@example.com").exists()  # fails today
+        assert not User.objects.filter(email="bulk@example.com").exists()
+
+        # Valid bulk writes keep working (registration/normal flows unaffected).
+        User.objects.bulk_create(
+            [User(username="bulkok", email="bulk-ok@example.com", password=PASSWORD)]
+        )
+        assert User.objects.filter(username="bulkok").exists()
 
 
 # ---------------------------------------------------------------------------

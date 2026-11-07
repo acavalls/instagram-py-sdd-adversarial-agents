@@ -3,12 +3,14 @@
 import uuid
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
+from django.utils import timezone
 
 from apps.accounts.models import User
-from apps.posts.models import MediaType, Post, PostMedia
+from apps.posts.models import MEDIA_TOO_MANY_ERROR, MediaType, Post, PostMedia
 from apps.posts.services import PostService
 
 pytestmark = pytest.mark.django_db
@@ -93,6 +95,35 @@ def test_list_for_user_pagination_window():
     assert not {post.pk for post in page_one} & {post.pk for post in page_two}
 
 
+def test_list_for_user_identical_created_at_stable_window():
+    """Spec scenario: Pagination window — two posts with identical
+    ``created_at`` keep a stable, duplicate-free window: the ``-id``
+    tiebreaker (design decision 2, same pair as ``Post.Meta.ordering``)
+    makes the order deterministic across pages and queries."""
+    user = make_user()
+    same_time = timezone.now()
+    posts = []
+    for index in range(3):
+        post = make_post(user, caption=f"tied {index}")
+        Post.objects.filter(pk=post.pk).update(created_at=same_time)
+        posts.append(Post.objects.get(pk=post.pk))
+
+    page_one = PostService().list_for_user(user, limit=2, offset=0)
+    page_two = PostService().list_for_user(user, limit=2, offset=2)
+
+    # Every post appears exactly once across the pages (duplicate-free)
+    all_pks = [post.pk for post in (*page_one, *page_two)]
+    assert len(set(all_pks)) == len(all_pks) == 3
+    assert {post.pk for post in (*page_one, *page_two)} == {post.pk for post in posts}
+    # The window is stable: the full listing agrees with the pages' order,
+    # and repeating the same query returns the same order.
+    full = PostService().list_for_user(user, limit=10, offset=0)
+    assert all_pks == [post.pk for post in full]
+    assert [post.pk for post in PostService().list_for_user(user, limit=2, offset=0)] == [
+        post.pk for post in page_one
+    ]
+
+
 def test_exists_reports_post_presence():
     service = PostService()
     user = make_user()
@@ -144,6 +175,23 @@ def test_create_without_media_is_valid():
 
     assert Post.objects.get(pk=post.pk).caption == "just a caption"
     assert post.media.count() == 0
+
+
+def test_create_with_too_many_media_files_persists_nothing():
+    """Spec: Post creation (design decision 3, audit F-03/CS-001) —
+    ``PostService.create`` persists media through ``bulk_create``, which
+    bypasses ``PostMedia.save()``; the service enforces the 10-media cap
+    itself and nothing is persisted when it is violated."""
+    user = make_user()
+    media_files = [make_media_file(f"media-{index}.gif") for index in range(11)]
+
+    with pytest.raises(ValidationError) as excinfo:
+        PostService().create(user, caption="overflow", media_files=media_files)
+
+    assert MEDIA_TOO_MANY_ERROR in str(excinfo.value)
+    # Nothing persisted: no post, no media.
+    assert not Post.objects.filter(caption="overflow").exists()
+    assert PostMedia.objects.count() == 0
 
 
 def test_update_caption_updates_caption_and_timestamp():

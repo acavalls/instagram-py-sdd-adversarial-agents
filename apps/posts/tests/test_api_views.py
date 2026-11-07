@@ -8,7 +8,7 @@ from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import AccessToken
 
 from apps.accounts.models import User
-from apps.posts.models import Post
+from apps.posts.models import MEDIA_TOO_MANY_ERROR, Post
 
 pytestmark = pytest.mark.django_db
 
@@ -75,7 +75,8 @@ def test_successful_api_creation(api_client):
 
 def test_api_creation_with_too_many_media_files(api_client):
     """Spec scenario: API creation with too many media files — more than 10
-    media files answer 400 with a validation error."""
+    media files answer 400 with the serializer's validation error (the model
+    guard stays a backstop for every other persistence path)."""
     auth_client(api_client, make_user())
     files = {f"media_{index}": make_media_file(f"m{index}.gif") for index in range(11)}
     payload = {"media": list(files.values())}
@@ -84,6 +85,7 @@ def test_api_creation_with_too_many_media_files(api_client):
 
     assert response.status_code == 400
     assert "media" in response.json()
+    assert MEDIA_TOO_MANY_ERROR in response.json()["media"]
     assert Post.objects.count() == 0
 
     # Exactly 10 files are accepted (fresh files: the ones above were

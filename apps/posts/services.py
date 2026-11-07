@@ -3,10 +3,17 @@ on posts, called by use cases."""
 
 import uuid
 
+from django.core.exceptions import ValidationError
 from django.core.files.base import File
 
 from apps.accounts.models import User
-from apps.posts.models import MediaType, Post, PostMedia
+from apps.posts.models import (
+    MEDIA_MAX_COUNT,
+    MEDIA_TOO_MANY_ERROR,
+    MediaType,
+    Post,
+    PostMedia,
+)
 
 # Safe upper bound for limit/offset: the maximum SQLite INTEGER. Larger
 # values overflow the database binding (IntegrityError), so they are clamped
@@ -35,16 +42,17 @@ class PostService:
     def list_for_user(self, user: User, *, limit: int = 10, offset: int = 0) -> list[Post]:
         """Return the user's own posts, newest first, as a pagination window.
 
-        Ordering comes from the model's ``Meta.ordering``
-        (``["-created_at"]``); ``limit``/``offset`` slice the window without
-        duplicates across pages (spec: Post listing). Values beyond
-        ``MAX_PAGINATION_BOUND`` are clamped so an unbounded integer never
-        overflows the database binding.
+        Ordering is newest first with the identifier as tiebreaker (design
+        decision 2: ``["-created_at", "-id"]``, kept consistent with
+        ``Post.Meta.ordering`` and ``FeedService.list_feed``);
+        ``limit``/``offset`` slice the window without duplicates across pages
+        (spec: Post listing). Values beyond ``MAX_PAGINATION_BOUND`` are
+        clamped so an unbounded integer never overflows the database binding.
         """
         limit = min(limit, MAX_PAGINATION_BOUND)
         offset = min(offset, MAX_PAGINATION_BOUND)
         return list(
-            Post.objects.filter(owner=user).order_by("-created_at")[offset : offset + limit]
+            Post.objects.filter(owner=user).order_by("-created_at", "-id")[offset : offset + limit]
         )
 
     def exists(self, post_id: uuid.UUID | str) -> bool:
@@ -66,11 +74,14 @@ class PostService:
         """Create a post for ``owner`` and attach its media in order.
 
         ``media_files`` are uploaded-file-like objects (optional, up to 10 —
-        enforced by the callers/serializers, design decision 5). Each file is
+        design decision 3: the media-count invariant is enforced here too,
+        because ``bulk_create`` bypasses ``PostMedia.save()``). Each file is
         persisted through ``bulk_create`` with its zero-based position, so
         ``PostMedia.order`` matches the submitted order. Returns the post
         (media attached afterwards, in a single bulk insert).
         """
+        if media_files and len(media_files) > MEDIA_MAX_COUNT:
+            raise ValidationError({"media": [MEDIA_TOO_MANY_ERROR]})
         post = Post.objects.create(owner=owner, caption=caption)
         if media_files:
             PostMedia.objects.bulk_create(

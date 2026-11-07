@@ -11,14 +11,12 @@ from rest_framework import serializers
 from apps.posts.models import (
     CAPTION_MAX_LENGTH,
     CAPTION_TOO_LONG_ERROR,
+    MEDIA_MAX_COUNT,
+    MEDIA_TOO_MANY_ERROR,
     MediaType,
     Post,
     PostMedia,
 )
-
-# API-level media limit (delta spec: Post creation — "up to 10 media files").
-MEDIA_MAX_COUNT = 10
-MEDIA_TOO_MANY_ERROR = "A post can have at most 10 media files."
 
 
 class PostMediaSerializer(serializers.ModelSerializer):

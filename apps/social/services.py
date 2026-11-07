@@ -2,6 +2,7 @@
 and feed/suggestion retrieval on models, called by use cases."""
 
 from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 from django.db.models import Q
 
 from apps.accounts.models import User
@@ -11,7 +12,9 @@ from apps.social.models import Follow
 
 # Reference error strings (design decision 1): the service checks return
 # these before the DB constraints (unique pair, no_self_follow) act as the
-# backstop, so IntegrityError never escapes under normal flows.
+# backstop; a constraint hit that slips past the checks (concurrent racer)
+# is translated into the same reference error (design decision 5), never a
+# raw IntegrityError/500.
 SELF_FOLLOW_ERROR = "You cannot follow yourself"
 ALREADY_FOLLOWING_ERROR = "Already following this user"
 FOLLOW_NOT_FOUND_ERROR = "Follow relationship not found"
@@ -28,13 +31,22 @@ class FollowService:
 
         Self-follows and duplicate pairs are rejected with the reference
         error strings (spec scenarios: Self-follow rejected, Duplicate
-        follow rejected); the database constraints remain the backstop.
+        follow rejected). When two concurrent racers both pass the
+        ``is_following`` check, the database unique constraint rejects the
+        loser's INSERT and the service translates that ``IntegrityError``
+        into the same reference error, so the losing racer gets the
+        reference toast instead of a 500 (design decision 5). The
+        self-follow branch above is synchronous, so a self-follow can
+        never reach the database constraint.
         """
         if follower.pk == following.pk:
             raise ValidationError(SELF_FOLLOW_ERROR)
         if self.is_following(follower, following):
             raise ValidationError(ALREADY_FOLLOWING_ERROR)
-        return Follow.objects.create(follower=follower, following=following)
+        try:
+            return Follow.objects.create(follower=follower, following=following)
+        except IntegrityError as exc:
+            raise ValidationError(ALREADY_FOLLOWING_ERROR) from exc
 
     def unfollow(self, follower: User, following: User) -> None:
         """Remove the follow relationship ``follower -> following``.
@@ -57,9 +69,15 @@ class FollowService:
         When ``q`` is given, only the followed users whose username, first
         name or last name matches it (case-insensitive) are returned — the
         search is a query concern that lives in the service (design decision
-        9). The followed users are loaded up front (``select_related``) so
-        callers never trigger extra queries; ordering comes from the model's
-        ``Meta.ordering`` (``["-created_at"]``).
+        9). The match is LITERAL (design decision 6): ``icontains`` on a
+        direct value escapes ``%``, ``_`` and ``\\`` through the ORM's
+        ``PatternLookup`` (``prep_for_like_query``), so wildcards never
+        widen the match. Do NOT escape ``q`` here by hand — the ORM would
+        escape it a second time and plain substrings containing those
+        characters would stop matching. The followed users are loaded up
+        front (``select_related``) so callers never trigger extra queries;
+        ordering comes from the model's ``Meta.ordering``
+        (``["-created_at"]``).
         """
         follows = Follow.objects.filter(follower=user).select_related("following")
         if q:
@@ -86,12 +104,13 @@ class FeedService:
         A subquery on ``Follow`` selects the posts whose owner is followed
         (reference pattern, design decision 2); the user's own posts are not
         included (self-follow is forbidden by the model). Ordering is
-        ``-created_at`` (kept consistent with ``PostService.list_for_user``;
-        the missing tiebreaker is audit finding CS-002, a known pending
-        regularization). ``limit``/``offset`` slice the window without
-        duplicates across pages; values beyond ``MAX_PAGINATION_BOUND`` are
-        clamped exactly as in ``PostService`` so an unbounded integer never
-        overflows the database binding.
+        newest first with the identifier as tiebreaker
+        (``["-created_at", "-id"]``, design decision 2, kept consistent with
+        ``Post.Meta.ordering`` and ``PostService.list_for_user``), so
+        pagination windows stay deterministic. ``limit``/``offset`` slice
+        the window without duplicates across pages; values beyond
+        ``MAX_PAGINATION_BOUND`` are clamped exactly as in ``PostService`` so
+        an unbounded integer never overflows the database binding.
         """
         limit = min(limit, MAX_PAGINATION_BOUND)
         offset = min(offset, MAX_PAGINATION_BOUND)
@@ -99,7 +118,7 @@ class FeedService:
         return list(
             Post.objects.filter(owner__in=followed_ids)
             .select_related("owner")
-            .order_by("-created_at")[offset : offset + limit]
+            .order_by("-created_at", "-id")[offset : offset + limit]
         )
 
     def get_suggestions(self, user: User, *, limit: int = SUGGESTIONS_LIMIT) -> list[User]:

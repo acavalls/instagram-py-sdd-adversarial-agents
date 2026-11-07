@@ -5,6 +5,7 @@ from datetime import timedelta
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.utils import timezone
 
 from apps.accounts.models import User
@@ -85,6 +86,30 @@ def test_follow_creates_relationship():
     assert Follow.objects.filter(follower=alice, following=bob).exists()
 
 
+def test_follow_race_translates_integrity_error_into_reference_error(monkeypatch):
+    """Scenario: Duplicate follow rejected (concurrent race, design decision
+    5) — when two racers both pass the ``is_following`` check, the loser hits
+    the database unique constraint; the service translates that
+    ``IntegrityError`` into the reference error instead of leaking a 500, and
+    exactly one row is stored."""
+    alice = make_user()
+    bob = make_user(username="bob", email="bob@example.com")
+    follow(alice, bob)
+    assert Follow.objects.count() == 1
+
+    # Simulate the losing racer: its ``is_following`` check ran before the
+    # winner's row was committed, so it reported False for an existing pair.
+    monkeypatch.setattr(FollowService, "is_following", lambda self, f, g: False)
+
+    # The savepoint keeps the aborted INSERT from poisoning the test
+    # transaction (same pattern as the constraint tests in test_models.py).
+    with transaction.atomic(), pytest.raises(ValidationError) as exc_info:
+        FollowService().follow(follower=alice, following=bob)
+
+    assert exc_info.value.messages == [ALREADY_FOLLOWING_ERROR]
+    assert Follow.objects.count() == 1  # exactly one row for the pair
+
+
 def test_unfollow_removes_relationship():
     alice = make_user()
     bob = make_user(username="bob", email="bob@example.com")
@@ -158,6 +183,52 @@ def test_get_following_search_filters_by_username_or_name():
     assert service.get_following(alice) == [dave, carol, bob]
 
 
+def test_get_following_search_matches_literals_never_wildcards():
+    """Scenario: Following list search filters (design decision 6) — ``%``,
+    ``_`` and ``\\`` in the query are literal characters, so wildcards never
+    widen the match and queries containing them keep matching the literal
+    text. Usernames are alphanumeric-only (accounts rule), so the hostile
+    characters are exercised through the first/last name fields, which the
+    same query matches."""
+    alice = make_user()
+    pct = make_user(username="pctuser", email="pct@example.com", first_name="100%")
+    uscore = make_user(username="uscoreuser", email="uscore@example.com", last_name="a_b")
+    plain = make_user(username="plainuser", email="plain@example.com")
+    service = FollowService()
+    service.follow(follower=alice, following=pct)
+    service.follow(follower=alice, following=uscore)
+    service.follow(follower=alice, following=plain)
+
+    # "100%" matches only the name that contains the literal "100%" — not
+    # every row (the trailing % is no longer a wildcard).
+    assert service.get_following(alice, q="100%") == [pct]
+    # A bare "%" matches only names containing a literal percent sign; it no
+    # longer matches everything.
+    assert service.get_following(alice, q="%") == [pct]
+    # Same for the single-character wildcard "_": only the literal "_".
+    assert service.get_following(alice, q="_") == [uscore]
+    assert service.get_following(alice, q="a_b") == [uscore]
+    # An escaped-underscore query text ("a\_b") is not a substring of "a_b".
+    assert service.get_following(alice, q="a\\_b") == []
+    # Plain substrings keep matching exactly as before.
+    assert service.get_following(alice, q="plain") == [plain]
+
+
+def test_get_following_search_backslash_is_literal():
+    """Scenario: Following list search filters — a query containing a
+    backslash matches the literal backslash character."""
+    alice = make_user()
+    bslash = make_user(username="bslashuser", email="bslash@example.com", last_name="x\\y")
+    plain = make_user(username="plainuser", email="plain@example.com")
+    service = FollowService()
+    service.follow(follower=alice, following=bslash)
+    service.follow(follower=alice, following=plain)
+
+    assert service.get_following(alice, q="\\") == [bslash]
+    assert service.get_following(alice, q="x\\y") == [bslash]
+    assert service.get_following(alice, q="\\\\") == []
+
+
 def test_get_followers_returns_follower_users_newest_first():
     """The users following a profile come back newest relationship first."""
     alice = make_user()
@@ -228,6 +299,38 @@ def test_list_feed_pagination_window_no_duplicates_across_pages():
     # The owner is loaded up front (select_related) so post cards render
     # without extra queries.
     assert page_one[0].owner == bob
+
+
+def test_list_feed_identical_created_at_stable_duplicate_free_window():
+    """Spec scenario: Pagination window — two posts with identical
+    ``created_at`` keep a stable, duplicate-free pagination window across
+    pages: the ``-id`` tiebreaker (design decision 2, the same pair as
+    ``Post.Meta.ordering``) makes the order deterministic."""
+    alice = make_user()
+    bob = make_user(username="bob", email="bob@example.com")
+    follow(alice, bob)
+    same_time = timezone.now()
+    posts = []
+    for index in range(3):
+        post = make_post(bob, caption=f"tied {index}", minutes_ago=0)
+        Post.objects.filter(pk=post.pk).update(created_at=same_time)
+        posts.append(Post.objects.get(pk=post.pk))
+
+    page_one = FeedService().list_feed(alice, limit=2, offset=0)
+    page_two = FeedService().list_feed(alice, limit=2, offset=2)
+
+    # Every followed post appears exactly once across the pages (no
+    # duplicates, none lost to the unstable ordering).
+    all_pks = [post.pk for post in (*page_one, *page_two)]
+    assert len(set(all_pks)) == len(all_pks) == 3
+    assert {post.pk for post in (*page_one, *page_two)} == {post.pk for post in posts}
+    # The window is stable: the full feed agrees with the pages' order and
+    # repeating the same query returns the same order.
+    full = FeedService().list_feed(alice, limit=10, offset=0)
+    assert all_pks == [post.pk for post in full]
+    assert [post.pk for post in FeedService().list_feed(alice, limit=2, offset=0)] == [
+        post.pk for post in page_one
+    ]
 
 
 def test_get_suggestions_exclude_followed_users_and_self():

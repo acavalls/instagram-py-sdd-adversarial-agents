@@ -162,32 +162,26 @@ class TestCreateSuperuserInteractions:
         assert User.objects.filter(username="alice").count() == 1
         assert not User.objects.filter(email="root@example.com").exists()
 
-    @pytest.mark.xfail(
-        reason="BUG-005 deferred to a future cycle by Sheriff decision "
-        "(2026-11-06): create_user/create_superuser(None) raises an unhandled "
-        "TypeError instead of the errors-as-values detached instance or "
-        "Django's ValueError. Kept as the executable record.",
-        strict=False,
-    )
-    def test_atk_r3_006_none_username_raises_typeerror_not_valueerror(self):
-        """ATK-R3-006 (BUG-005 repro): create_superuser(None, ...) — the
-        delegation must never crash with an unhandled TypeError. The manager
-        contract says an invalid username neither raises nor persists
-        (detached instance); Django's platform contract says ValueError('The
-        given username must be set'). ACTUAL: validate_username_format(None)
-        does len(None) -> TypeError, leaking out of create_superuser (and
-        create_user) as an unhandled crash — neither detached nor ValueError.
-
-        Ideal accepted by this test: detached instance OR ValueError; any
-        other exception (TypeError) is the failure."""
-        try:
-            user = User.objects.create_superuser(
+    def test_atk_r3_006_none_username_raises_validation_error(self):
+        """ATK-R3-006 (BUG-005, fixed by regularize-social-drifts, task 2.2 —
+        design decision 7): create_superuser(None, ...) — and create_user
+        (None, ...) through the same delegation — used to crash with an
+        unhandled TypeError (``len(None)`` inside
+        ``validate_username_format``). The manager now raises the model's
+        username validation error (ValidationError carrying the length-rule
+        message) and persists nothing; it never TypeErrors."""
+        with pytest.raises(ValidationError):
+            User.objects.create_superuser(
                 username=None,  # type: ignore[arg-type]  # BUG-005 repro: None is the attack
                 email=unique_email("none"),
                 password=PASSWORD,
             )
-        except ValueError:
-            pass  # Django platform contract: acceptable
-        else:
-            assert user._state.adding  # errors-as-values contract: acceptable
+        with pytest.raises(ValidationError):
+            User.objects.create_user(
+                username=None,  # type: ignore[arg-type]  # BUG-005 repro: None is the attack
+                email=unique_email("none-user"),
+                password=PASSWORD,
+            )
         assert not User.objects.filter(email=unique_email("none")).exists()
+        assert not User.objects.filter(email=unique_email("none-user")).exists()
+        assert User.objects.count() == 0
