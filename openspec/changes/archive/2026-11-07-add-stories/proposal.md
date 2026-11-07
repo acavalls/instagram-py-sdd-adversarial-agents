@@ -15,7 +15,8 @@ adapted to this repo's single-module layout):
 
 - Data model: `Story` (UUID pk, owner FK, placeholder image media under a
   dated `stories/<year>/<month>/<day>/` path, media_type image/video default
-  image, `created_at`, `expires_at` set to now + 24h on save) and `StoryView`
+  image, `created_at`, `expires_at` set to `created_at + 24h` on save) and
+  `StoryView`
   (UUID pk, story FK, viewer FK, `viewed_at`, unique (story, viewer)).
 - `StoryService` in `apps/posts/services.py`: `create` (generated placeholder
   image, no upload), `get_active_for_user`, `get_feed_stories` (followees

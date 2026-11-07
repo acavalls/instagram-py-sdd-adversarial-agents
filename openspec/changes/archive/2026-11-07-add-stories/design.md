@@ -41,9 +41,11 @@ Adaptations to this repo's state (vs the reference snapshot):
    owner FK, `ImageField(upload_to="stories/%Y/%m/%d/")`, `media_type` with
    image/video choices defaulting to image, `created_at`, `expires_at`),
    `StoryView` (UUID pk, story FK, viewer FK, `viewed_at`, unique constraint
-   on (story, viewer), index). `Story.save` sets `expires_at` to now + 24h
-   when empty. Rationale: stories are post-domain ephemeral media; keeps
-   parity and migration history simple. Decision: agent-decided (2026-11-07).
+   on (story, viewer), index). `Story.save` sets `expires_at` to
+   `created_at + 24h` when empty (the callable `created_at` default makes the
+   exact "24 hours later" scenario hold on every path). Rationale: stories
+   are post-domain ephemeral media; keeps parity and migration history
+   simple. Decision: agent-decided (2026-11-07).
 
 2. **`StoryService` in `apps/posts/services.py`**, mirroring the reference
    API: `create` (generates a random-color placeholder JPEG via
