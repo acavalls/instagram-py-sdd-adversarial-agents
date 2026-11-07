@@ -51,19 +51,19 @@ rules:
     - Record every business decision in proposal.md with its date
   design:
     - No new dependency without a written justification
-    - State the validation boundaries per layer: HTTP request format at the
+    - "State the validation boundaries per layer: HTTP request format at the
       edge (views/serializers), application rules in use cases, business
-      invariants in models, technical constraints in the database
-    - Django idiom replaces the ports + fake-adapter pattern of hexagonal
+      invariants in models, technical constraints in the database"
+    - "Django idiom replaces the ports + fake-adapter pattern of hexagonal
       incremental flows: field validators, model save()/full_clean() and
       managers act as the value objects and factories; never introduce a
-      repository-ports layer
+      repository-ports layer"
   tasks:
     - Group tasks by capability; each task must map to a spec requirement
       or scenario
-    - Order task groups inside-out: domain models -> services/use cases ->
+    - "Order task groups inside-out: domain models -> services/use cases ->
       adapters (API, web) -> integration/E2E; each group must be
-      independently verifiable (its tests run within the group)
+      independently verifiable (its tests run within the group)"
 
 operations:
   apply:
