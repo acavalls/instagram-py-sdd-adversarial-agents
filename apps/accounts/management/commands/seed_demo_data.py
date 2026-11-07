@@ -6,9 +6,9 @@ panel and the profile pages have data to explore during manual validation.
 
 Layer discipline (config contract): everything goes through the existing
 use cases/services — users through ``RegisterUserUseCase``, follows through
-``FollowService`` and posts through ``CreatePostUseCase`` (the same path the
-web create flow uses, so media handling is identical). The command never
-touches the ORM directly.
+``FollowService``, posts through ``CreatePostUseCase`` and stories through
+``CreateStoryUseCase`` (the same paths the web create flows use, so media
+handling is identical). The command never touches the ORM directly.
 
 Idempotency: when the demo users already exist the whole seed is skipped,
 so re-running the command never duplicates the ecosystem.
@@ -20,7 +20,12 @@ from django.core.management.base import BaseCommand, CommandError
 
 from apps.accounts.models import User
 from apps.accounts.use_cases import RegisterUserInput, RegisterUserUseCase
-from apps.posts.use_cases import CreatePostInput, CreatePostUseCase
+from apps.posts.use_cases import (
+    CreatePostInput,
+    CreatePostUseCase,
+    CreateStoryInput,
+    CreateStoryUseCase,
+)
 from apps.social.services import FollowService
 
 # Shared password for every demo account (>= 8 characters, User rules).
@@ -52,6 +57,11 @@ DEMO_FOLLOWS: list[tuple[str, str]] = [
 
 # Posts created for each demo user.
 POSTS_PER_USER = 3
+
+# Demo users that get one active story each (design decision 8, change
+# add-stories): enough to populate the home-page stories bar for the demo
+# followers without making every account an author.
+DEMO_STORY_USERNAMES: list[str] = ["demoalice", "demobob", "democarol"]
 
 # Fixed in-code caption pool (deterministic, same style as the web
 # placeholder captions; never copyrighted assets).
@@ -86,8 +96,9 @@ class Command(BaseCommand):
     """Seed the demo ecosystem (skips when the demo users already exist)."""
 
     help = (
-        "Create demo users, follows among them and placeholder posts so the "
-        "feed, suggestions and profiles have data for manual validation."
+        "Create demo users, follows among them, placeholder posts and active "
+        "stories so the feed, suggestions, profiles and the stories bar have "
+        "data for manual validation."
     )
 
     def handle(self, *args: object, **options: object) -> None:
@@ -100,10 +111,12 @@ class Command(BaseCommand):
         users = self._create_users()
         self._create_follows(users)
         self._create_posts(users)
+        self._create_stories(users)
         self.stdout.write(
             self.style.SUCCESS(
-                f"Seeded {len(users)} demo users, {len(DEMO_FOLLOWS)} follows "
-                f"and {len(users) * POSTS_PER_USER} posts."
+                f"Seeded {len(users)} demo users, {len(DEMO_FOLLOWS)} follows, "
+                f"{len(users) * POSTS_PER_USER} posts and "
+                f"{len(DEMO_STORY_USERNAMES)} stories."
             )
         )
 
@@ -160,3 +173,19 @@ class Command(BaseCommand):
                 )
                 if not output.success:
                     raise CommandError(f"Could not create demo post for {username}: {output.error}")
+
+    def _create_stories(self, users: dict[str, User]) -> None:
+        """Create one active story per demo storyteller through
+        ``CreateStoryUseCase`` (design decision 8, change add-stories).
+
+        The generated placeholder JPEG and the 24h expiration are the same
+        service/model concerns the web create flow uses (spec: Story data
+        model). Stories are created inside the seed flow, so the existing
+        whole-seed skip keeps re-runs idempotent (spec: no duplicates on
+        re-run).
+        """
+        use_case = CreateStoryUseCase()
+        for username in DEMO_STORY_USERNAMES:
+            output = use_case.execute(CreateStoryInput(owner=users[username]))
+            if not output.success:
+                raise CommandError(f"Could not create demo story for {username}: {output.error}")

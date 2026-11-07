@@ -1,0 +1,11 @@
+{# Toast + out-of-band stories bar (stories spec: Successful web creation /
+   First view recorded, design decision 5). The HTMX swap puts the toast
+   messages into the #stories-toasts container next to the bar, and the
+   hx-swap-oob element re-renders the whole stories bar by id (same HTMX
+   conventions as the follow button partial). #}
+{% for message in messages %}
+    <div class="toast {{ message.tags }}">{{ message }}</div>
+{% endfor %}
+<section id="stories-bar" aria-label="Stories" hx-swap-oob="true">
+    {% include "web/_stories.html" %}
+</section>

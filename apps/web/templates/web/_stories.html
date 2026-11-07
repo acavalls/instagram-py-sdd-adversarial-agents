@@ -1,0 +1,35 @@
+{# Stories bar partial (stories spec: Stories bar on the home page, design
+   decision 5). The "Your story" add button posts to the story-create
+   endpoint and one avatar per followed-user story group (unviewed groups
+   first — the ordering is the service's), each labeled with the username,
+   using the profile picture when present, with the ring state class
+   (story-avatar-unseen / story-avatar-viewed, design decision 7). Clicking
+   an avatar marks the group's newest story viewed (design decision: no
+   story viewer/carousel — the HTMX response re-renders the bar OOB). #}
+<div class="stories-bar-inner">
+    <form class="story-item"
+          hx-post="{% url 'web:story-create' %}"
+          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+          hx-target="#stories-toasts" hx-swap="innerHTML">
+        <button class="story-avatar story-avatar-add" type="submit"
+                aria-label="Create story">+</button>
+        <span class="story-label">Your story</span>
+    </form>
+    {% for group in story_groups %}
+        <form class="story-item"
+              hx-post="{% url 'web:story-view' group.stories.0.story.pk %}"
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+              hx-target="#stories-toasts" hx-swap="innerHTML">
+            <button class="story-avatar story-avatar-{{ group.is_viewed|yesno:'viewed,unseen' }}"
+                    type="submit" aria-label="View story">
+                {% if group.owner.profile_pic %}
+                    <img class="story-avatar-img" src="{{ group.owner.profile_pic.url }}"
+                         alt="{{ group.owner.username }}">
+                {% else %}
+                    <span class="story-avatar-initial">{{ group.owner.username|first|upper }}</span>
+                {% endif %}
+            </button>
+            <span class="story-label">{{ group.owner.username }}</span>
+        </form>
+    {% endfor %}
+</div>

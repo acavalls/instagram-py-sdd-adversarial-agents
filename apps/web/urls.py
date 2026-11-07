@@ -2,7 +2,7 @@
 
 from django.urls import include, path
 
-from apps.web import social_views, views
+from apps.web import social_views, story_views, views
 
 app_name = "web"
 
@@ -19,6 +19,10 @@ urlpatterns = [
     path("profile/<uuid:user_id>/", social_views.profile_view, name="profile"),
     # Following-list modal (social spec: Following list, design decision 9).
     path("profile/<uuid:user_id>/following/", social_views.following_list, name="following-list"),
+    # Web stories (stories spec: Story creation, Story view tracking,
+    # design decision 5); POST-only HTMX endpoints like the follow buttons.
+    path("stories/create/", story_views.create_story, name="story-create"),
+    path("stories/<uuid:story_id>/view/", story_views.view_story, name="story-view"),
     # Web post CRUD (patterns in task group 4, design decision 6)
     path("posts/", include("apps.posts.web_urls")),
 ]

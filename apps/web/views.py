@@ -24,6 +24,8 @@ from apps.accounts.use_cases import (
     RegisterUserInput,
     RegisterUserUseCase,
 )
+from apps.posts.services import StoryService
+from apps.posts.use_cases import ListFeedStoriesInput, ListFeedStoriesUseCase
 from apps.social.use_cases import (
     GetUserSuggestionsInput,
     GetUserSuggestionsUseCase,
@@ -134,6 +136,11 @@ def feed(request: HttpRequest) -> HttpResponse:
     spec: User suggestions), and when the user follows nobody the template
     shows an empty state pointing to the suggestions (social spec: Empty
     feed state)."""
+    # Lazy purge of expired stories on every home render (stories spec:
+    # Expired story cleanup — "Lazy purge on home render"; design decision 6:
+    # no background workers exist, so the render deletes expired stories and
+    # their view records before listing feed stories and posts).
+    StoryService().cleanup_expired()
     try:
         page = int(request.GET.get("page", "1"))
     except ValueError:
@@ -145,9 +152,14 @@ def feed(request: HttpRequest) -> HttpResponse:
         ListFeedInput(user=user, limit=FEED_PAGE_SIZE, offset=offset)
     )
     suggestions = GetUserSuggestionsUseCase().execute(GetUserSuggestionsInput(user=user)).users
+    # Stories bar above the post list (stories spec: Stories bar on the home
+    # page; posts delta spec: Post listing): followed users' active story
+    # groups, unviewed first (design decision 2's service ordering).
+    story_groups = ListFeedStoriesUseCase().execute(ListFeedStoriesInput(viewer=user)).story_groups
     context = {
         "posts": output.posts,
         "suggestions": suggestions,
+        "story_groups": story_groups,
         # Presentation-only branch for the empty state (social spec: Empty
         # feed state): a state lookup, not a business rule.
         "follows_nobody": not user.following.exists(),

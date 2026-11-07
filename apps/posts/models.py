@@ -6,11 +6,13 @@ duplicating the messages.
 """
 
 import uuid
+from datetime import timedelta
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 if TYPE_CHECKING:
     from apps.accounts.models import User
@@ -31,6 +33,11 @@ MEDIA_TOO_MANY_ERROR = "A post can have at most 10 media files."
 # Spec ownership error texts (delta spec: Caption update / Post deletion).
 POST_EDIT_NOT_OWNER_ERROR = "You can only edit your own posts"
 POST_DELETE_NOT_OWNER_ERROR = "You can only delete your own posts"
+
+# Spec story lifetime (delta spec: Story data model — "an expiration
+# timestamp set to 24 hours after creation"). ``Story.save`` enforces it on
+# EVERY persistence path, mirroring the caption/media save-guards.
+STORY_EXPIRY_HOURS = 24
 
 
 class MediaType(models.TextChoices):
@@ -331,3 +338,95 @@ class PostMedia(models.Model):
         ):
             raise ValidationError({"post": [MEDIA_TOO_MANY_ERROR]})
         super().save(*args, **kwargs)
+
+
+class Story(models.Model):
+    """An ephemeral 24-hour story owned by a user (design decision 1).
+
+    The media is always a generated placeholder image (deterministic-media
+    principle); ``media_type`` keeps the image/video choice for parity but
+    the creation flow only ever produces images.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="stories",
+    )
+    image = models.ImageField(upload_to="stories/%Y/%m/%d/")
+    media_type = models.CharField(
+        max_length=10,
+        choices=MediaType.choices,
+        default=MediaType.IMAGE,
+    )
+    # A callable default (instead of ``auto_now_add``) so the value is known
+    # on the instance BEFORE the insert and ``save()`` can derive
+    # ``expires_at`` from it: the expiration is exactly ``created_at`` + 24h
+    # (spec scenario "Story persisted with placeholder media"), not
+    # ``now() + 24h`` evaluated microseconds earlier.
+    created_at = models.DateTimeField(default=timezone.now, editable=False)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        # Newest first, with the identifier as tiebreaker (same convention
+        # as ``Post``): stories created within the same clock tick keep a
+        # deterministic order.
+        ordering = ["-created_at", "-id"]
+        indexes = [
+            models.Index(fields=["owner", "-created_at"]),
+            # The lazy purge (design decision 6) filters on ``expires_at``.
+            models.Index(fields=["expires_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"Story {self.pk} by {self.owner_id}"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        """Set the 24h expiration on EVERY persistence path.
+
+        A story lives exactly 24 hours (spec: Story data model) and nothing
+        else enforces the lifetime; a bare ``save()`` (shell, services)
+        without an explicit ``expires_at`` would either fail on the NOT NULL
+        column or let a caller persist an arbitrary lifetime. Mirrors the
+        ``Post.save`` guard pattern (design decision 1).
+        """
+        if self.expires_at is None:
+            self.expires_at = self.created_at + timedelta(hours=STORY_EXPIRY_HOURS)
+        super().save(*args, **kwargs)
+
+
+class StoryView(models.Model):
+    """A single (story, viewer) view record (design decision 1).
+
+    The unique constraint makes a repeated ``mark_viewed`` idempotent at the
+    database level (spec: Story view tracking — "at most once").
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    story = models.ForeignKey(
+        Story,
+        on_delete=models.CASCADE,
+        related_name="views",
+    )
+    viewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="story_views",
+    )
+    viewed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-viewed_at", "-id"]
+        constraints = [
+            models.UniqueConstraint(fields=["story", "viewer"], name="unique_story_viewer"),
+        ]
+        indexes = [
+            # "Which stories has this viewer seen" lookups (feed stories are
+            # decorated per viewer, design decision 2). The (story, viewer)
+            # pair is already indexed by the unique constraint.
+            models.Index(fields=["viewer", "story"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"StoryView {self.pk}: story {self.story_id} by {self.viewer_id}"

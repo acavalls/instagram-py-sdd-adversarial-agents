@@ -1,10 +1,16 @@
 """Services for the posts domain (design decision 3): read/write operations
-on posts, called by use cases."""
+on posts and stories, called by use cases."""
 
+import io
+import random
 import uuid
+from dataclasses import dataclass
 
 from django.core.exceptions import ValidationError
 from django.core.files.base import File
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone
+from PIL import Image
 
 from apps.accounts.models import User
 from apps.posts.models import (
@@ -13,7 +19,10 @@ from apps.posts.models import (
     MediaType,
     Post,
     PostMedia,
+    Story,
+    StoryView,
 )
+from apps.social.models import Follow
 
 # Safe upper bound for limit/offset: the maximum SQLite INTEGER. Larger
 # values overflow the database binding (IntegrityError), so they are clamped
@@ -104,3 +113,152 @@ class PostService:
     def delete(self, post: Post) -> None:
         """Delete ``post``; its media are removed by the database cascade."""
         post.delete()
+
+
+@dataclass(frozen=True, slots=True)
+class ViewerStory:
+    """A story decorated with the viewer's view state (design decision 2).
+
+    ``is_viewed`` answers "has THIS viewer seen THIS story?" — the per-story
+    flag the stories bar ring states and the group ordering are built on.
+    """
+
+    story: Story
+    is_viewed: bool
+
+
+@dataclass(frozen=True, slots=True)
+class StoryGroup:
+    """One followed owner's active stories for the stories bar (design
+    decision 2): newest story first, plus the owner for the avatar/label."""
+
+    owner: User
+    stories: list[ViewerStory]
+
+    @property
+    def is_viewed(self) -> bool:
+        """Group ring state: whether the viewer has seen the newest story.
+
+        The bar ordering (spec: Stories bar ordering) partitions groups by
+        their latest story's view state, so the group is "viewed" exactly
+        when its newest story is.
+        """
+        return bool(self.stories) and self.stories[0].is_viewed
+
+
+def _build_placeholder_story_media() -> SimpleUploadedFile:
+    """Build the generated placeholder story image (design decision 2).
+
+    Same deterministic-media principle as the web post placeholder
+    (``apps/web/post_views.py``), service-side: a random color in both the
+    1x1 JPEG pixels and the filename so consecutive placeholder stories do
+    not collide in the media storage.
+    """
+    color = random.randint(0, 0xFFFFFF)
+    buffer = io.BytesIO()
+    Image.new("RGB", (1, 1), color).save(buffer, format="JPEG")
+    return SimpleUploadedFile(
+        f"story-{color:06x}.jpg", buffer.getvalue(), content_type="image/jpeg"
+    )
+
+
+class StoryService:
+    """Domain operations for stories (called by use cases)."""
+
+    def create(self, owner: User) -> Story:
+        """Create a story for ``owner`` with the generated placeholder JPEG.
+
+        The 24h expiration is set by ``Story.save`` on this path too
+        (spec: Story data model — expiration exactly 24h after creation).
+        """
+        return Story.objects.create(owner=owner, image=_build_placeholder_story_media())
+
+    def get_active_by_id(self, story_id: uuid.UUID | str) -> Story | None:
+        """Return the non-expired story with the given id, or ``None``.
+
+        Mirrors ``PostService.get_by_id`` with the story-active filter: an
+        expired story is not active anywhere in the system (spec: Story data
+        model), so callers get ``None`` exactly as for an unknown id — the
+        owner is loaded up front (``select_related``) so use cases never
+        trigger extra queries.
+        """
+        return (
+            Story.objects.select_related("owner")
+            .filter(pk=story_id, expires_at__gt=timezone.now())
+            .first()
+        )
+
+    def get_active_for_user(self, owner: User) -> list[Story]:
+        """Return ``owner``'s non-expired stories, newest first.
+
+        An expired story is not active anywhere in the system (spec: Story
+        data model), so the ``expires_at`` filter is the single source of
+        the active/not-active decision; the model ordering
+        (``["-created_at", "-id"]``) keeps the result deterministic.
+        """
+        return list(
+            Story.objects.filter(owner=owner, expires_at__gt=timezone.now()).order_by(
+                "-created_at", "-id"
+            )
+        )
+
+    def get_feed_stories(self, viewer: User) -> list[StoryGroup]:
+        """Return the active stories of the users ``viewer`` follows, grouped
+        per owner for the stories bar (spec: Stories bar on the home page).
+
+        ONLY followed users appear (spec: Bar excludes non-followed users) —
+        the same ``Follow`` subquery pattern as ``FeedService.list_feed``.
+        Each story carries the viewer's view state (spec: Story view
+        tracking); groups whose newest story is unviewed come first,
+        followed by viewed groups, and within each group the stories keep
+        their creation order newest first (spec: Stories bar ordering).
+
+        View state is one ``StoryView.exists`` query per story (design
+        decision 2, matching the reference); acceptable at demo scale.
+        """
+        followed_ids = Follow.objects.filter(follower=viewer).values("following")
+        stories = (
+            Story.objects.filter(owner__in=followed_ids, expires_at__gt=timezone.now())
+            .select_related("owner")
+            .order_by("-created_at", "-id")
+        )
+        # Stories arrive newest first, so insertion order groups owners by
+        # their newest story (most recent owner first).
+        groups: dict[User, list[ViewerStory]] = {}
+        for story in stories:
+            viewed = ViewerStory(story=story, is_viewed=self.is_viewed(story, viewer))
+            groups.setdefault(story.owner, []).append(viewed)
+        result = [StoryGroup(owner=owner, stories=items) for owner, items in groups.items()]
+        # Stable sort: unviewed groups first, recency order kept inside each
+        # section (spec: Unviewed groups first).
+        result.sort(key=lambda group: group.is_viewed)
+        return result
+
+    def is_viewed(self, story: Story, viewer: User) -> bool:
+        """Return whether ``viewer`` has already viewed ``story``."""
+        return StoryView.objects.filter(story=story, viewer=viewer).exists()
+
+    def mark_viewed(self, story: Story, viewer: User) -> StoryView:
+        """Record ``viewer``'s view of ``story`` exactly once (spec: Story
+        view tracking — "Repeated view is idempotent").
+
+        ``get_or_create`` is backed by the (story, viewer) unique constraint
+        (design decision 1), so a repeated marking returns the existing
+        record instead of duplicating it.
+        """
+        story_view, _created = StoryView.objects.get_or_create(story=story, viewer=viewer)
+        return story_view
+
+    def cleanup_expired(self) -> int:
+        """Delete the expired stories and return how many were removed.
+
+        ``StoryView`` rows cascade with their story via the FK
+        ``on_delete=CASCADE`` (spec: Expired story cleanup — "deletes expired
+        stories together with their view records"). The count is taken
+        before the delete because Django's ``delete()`` return value counts
+        the cascaded view records too, not just the stories.
+        """
+        expired = Story.objects.filter(expires_at__lte=timezone.now())
+        count = expired.count()
+        expired.delete()
+        return count

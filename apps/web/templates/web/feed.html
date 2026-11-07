@@ -138,6 +138,15 @@
         <button class="auth-button feed-create" type="submit">Create post</button>
     </form>
 </div>
+{# Stories bar above the post list (stories spec: Stories bar on the home
+   page, posts delta spec: Post listing — "stories bar rendered above the
+   post list"). The #stories-toasts container stays outside the bar so the
+   HTMX story responses can drop their toast there while the bar itself is
+   swapped out-of-band by id (_toast_with_stories.html). #}
+<div id="stories-toasts" aria-live="polite"></div>
+<section id="stories-bar" aria-label="Stories">
+    {% include "web/_stories.html" %}
+</section>
 <div class="post-grid" id="post-grid">
     {% for post in posts %}
         {# Home cards show other users' posts: the edit/delete controls stay on the owner's profile grid (design decision 3). #}

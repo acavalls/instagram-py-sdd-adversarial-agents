@@ -7,12 +7,21 @@ from django.core.exceptions import ValidationError
 from django.core.files.base import File
 
 from apps.accounts.models import User
-from apps.posts.models import CAPTION_TOO_LONG_ERROR, Post
-from apps.posts.services import PostService
+from apps.posts.models import CAPTION_TOO_LONG_ERROR, Post, Story
+from apps.posts.services import PostService, StoryGroup, StoryService
+from apps.social.services import FollowService
 
 # Spec error for an unknown post identifier (delta spec: Post detail —
 # "Unknown post detail" expects exactly this message, mapped to 404).
 POST_NOT_FOUND_ERROR = "Post not found"
+
+# View-rule error strings (delta spec: Story view tracking; design decision
+# 3). An unknown id and an expired story are indistinguishable for the
+# viewer — an expired story "MUST NOT appear as active anywhere in the
+# system" — so both report the plain not-found message.
+STORY_NOT_FOUND_ERROR = "Story not found"
+STORY_SELF_VIEW_ERROR = "You cannot view your own story"
+STORY_NOT_FOLLOWED_ERROR = "You can only view stories from people you follow"
 
 
 @dataclass(frozen=True, slots=True)
@@ -199,3 +208,124 @@ class DeletePostUseCase:
             return DeletePostOutput(success=False, error=error)
         self._post_service.delete(post)
         return DeletePostOutput(success=True)
+
+
+@dataclass(frozen=True, slots=True)
+class CreateStoryInput:
+    """Input DTO for the story creation use case."""
+
+    owner: User
+
+
+@dataclass(frozen=True, slots=True)
+class CreateStoryOutput:
+    """Output DTO for the story creation use case (errors as strings)."""
+
+    success: bool
+    story: Story | None = None
+    error: str | None = None
+
+
+class CreateStoryUseCase:
+    """Create a story with the generated placeholder image (no upload).
+
+    The media generation and the 24h expiration are service/model concerns
+    (design decisions 1-2); the use case only orchestrates them.
+    """
+
+    def __init__(self, story_service: StoryService | None = None) -> None:
+        self._story_service = story_service or StoryService()
+
+    def execute(self, input_dto: CreateStoryInput) -> CreateStoryOutput:
+        """Create the story for ``owner`` with a generated placeholder JPEG."""
+        story = self._story_service.create(input_dto.owner)
+        return CreateStoryOutput(success=True, story=story)
+
+
+@dataclass(frozen=True, slots=True)
+class ListFeedStoriesInput:
+    """Input DTO for the feed-stories use case."""
+
+    viewer: User
+
+
+@dataclass(frozen=True, slots=True)
+class ListFeedStoriesOutput:
+    """Output DTO for the feed-stories use case (grouped, unviewed first)."""
+
+    success: bool
+    story_groups: list[StoryGroup]
+
+
+class ListFeedStoriesUseCase:
+    """Return the active stories of the users the viewer follows, grouped
+    per owner for the stories bar."""
+
+    def __init__(self, story_service: StoryService | None = None) -> None:
+        self._story_service = story_service or StoryService()
+
+    def execute(self, input_dto: ListFeedStoriesInput) -> ListFeedStoriesOutput:
+        """Return the followed users' story groups (design decision 4).
+
+        Follow filtering, view decoration and the unviewed-first ordering
+        live in the service (design decision 2); the empty result is simply
+        an empty list — the "Your story" add button is a template concern.
+        """
+        story_groups = self._story_service.get_feed_stories(input_dto.viewer)
+        return ListFeedStoriesOutput(success=True, story_groups=story_groups)
+
+
+@dataclass(frozen=True, slots=True)
+class ViewStoryInput:
+    """Input DTO for the story view use case."""
+
+    story_id: uuid.UUID | str
+    viewer: User
+
+
+@dataclass(frozen=True, slots=True)
+class ViewStoryOutput:
+    """Output DTO for the story view use case (errors as strings)."""
+
+    success: bool
+    story: Story | None = None
+    error: str | None = None
+
+
+class ViewStoryUseCase:
+    """Record the viewer's view of a followed user's active story.
+
+    Design decision 3 (flagged deviation): the reference web view calls
+    ``StoryService.mark_viewed`` directly; this project routes every write
+    through a use case, which also enforces the delta's view rules the
+    reference only partially enforces — no self-views, no non-followed
+    stories, expired stories treated as not found.
+    """
+
+    def __init__(
+        self,
+        story_service: StoryService | None = None,
+        follow_service: FollowService | None = None,
+    ) -> None:
+        self._story_service = story_service or StoryService()
+        self._follow_service = follow_service or FollowService()
+
+    def execute(self, input_dto: ViewStoryInput) -> ViewStoryOutput:
+        """Record the view once, or reject with the rule's error string.
+
+        Order of checks: unknown/expired id first (``STORY_NOT_FOUND_ERROR``),
+        then self-view, then the follow relationship — the follow check is
+        the only database query beyond the story fetch. A rejected input
+        never records a ``StoryView`` (scenarios: Self-view rejected,
+        Non-followed story not viewable); a repeated marking stays
+        idempotent via the service (spec: Repeated view is idempotent).
+        """
+        story = self._story_service.get_active_by_id(input_dto.story_id)
+        if story is None:
+            return ViewStoryOutput(success=False, error=STORY_NOT_FOUND_ERROR)
+        if story.owner_id == input_dto.viewer.pk:
+            return ViewStoryOutput(success=False, error=STORY_SELF_VIEW_ERROR)
+        if not self._follow_service.is_following(input_dto.viewer, story.owner):
+            return ViewStoryOutput(success=False, error=STORY_NOT_FOLLOWED_ERROR)
+        self._story_service.mark_viewed(story, input_dto.viewer)
+        return ViewStoryOutput(success=True, story=story)
