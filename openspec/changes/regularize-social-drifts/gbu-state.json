@@ -1,0 +1,89 @@
+{
+  "change": "regularize-social-drifts",
+  "status": "ATTACK_SURVIVED",
+  "current_group": "done",
+  "current_iteration": 1,
+  "groups": {
+    "1": {
+      "tasks": [
+        "1.1",
+        "1.2"
+      ],
+      "good": {
+        "status": "COMPLETED",
+        "iteration": 2,
+        "tests": "361 passed, 2 xfailed"
+      },
+      "ugly": {
+        "status": "APPROVED",
+        "iteration": 2
+      }
+    },
+    "2": {
+      "tasks": [
+        "2.1",
+        "2.2"
+      ],
+      "good": {
+        "status": "COMPLETED",
+        "iteration": 1,
+        "tests": "363 passed, 0 xfailed; cov 99.63%"
+      },
+      "ugly": {
+        "status": "APPROVED",
+        "iteration": 1
+      }
+    },
+    "3": {
+      "tasks": [
+        "3.1",
+        "3.2"
+      ],
+      "good": {
+        "status": "COMPLETED",
+        "iteration": 1,
+        "tests": "366 passed; cov 99.63%"
+      },
+      "ugly": {
+        "status": "APPROVED",
+        "iteration": 1
+      }
+    },
+    "4": {
+      "tasks": [
+        "4.1",
+        "4.2"
+      ],
+      "good": {
+        "status": "COMPLETED",
+        "iteration": 1,
+        "tests": "366 passed; cov 99.63%"
+      },
+      "ugly": {
+        "status": "APPROVED",
+        "iteration": 1
+      }
+    }
+  },
+  "bad": {
+    "status": "SURVIVES",
+    "iteration": 3,
+    "max_iterations": 3,
+    "wall_clock_minutes": 6,
+    "test_runs_limit": 10,
+    "test_runs_used": 10
+  },
+  "log": [
+    "group1 good iter1+2, ugly iter2 APPROVED; observation: CreatePostUseCase maps any ValidationError to CAPTION_TOO_LONG_ERROR (unreachable, non-blocking)",
+    "group2 good iter1, ugly iter1 APPROVED",
+    "group3 good/ugly iter1 APPROVED; F-06 resolved empirically: Django 6 already escapes LIKE wildcards in icontains (audit finding was wrong); behavior pinned by tests",
+    "group4 good/ugly iter1 APPROVED \u2014 all 4 groups complete; next: Bad whole-change attack",
+    "bad iter1: BROKEN (BUG-R001/R002) -> good fix rounds 1-2 (R002 adjudicated to error semantics, sanctioned edit to Bad test atk_r008)",
+    "bad iter2: BROKEN (BUG-R003/R004 new; R001/R002 verified closed) \u2014 budget exhausted, user approved extension to 3 iterations/10 runs",
+    "next: good fixes BUG-R003 (PostMedia update/bulk_update reassignment guard) and BUG-R004 (PostQuerySet.update caption guard), then bad re-attack iter3",
+    "good fix rounds 3-5: BUG-R003/R004 fixed (PostMedia update/bulk_update + PostQuerySet.update guards); R018 gap fixed (UserQuerySet.bulk_update); BUG-R005 fixed (PostQuerySet.bulk_create caption guard, silent-drop pinned by r025)",
+    "bad iter3: BROKEN with BUG-R005 only; OBS-R3-1/2/3 non-blocking (bulk_update no-op trio)",
+    "budget exhausted twice; user approved extension then static Ugly verification; Ugly APPROVED (BUG-R005 closed, loop integrity OK, gates green)",
+    "final gates: pytest 404 passed/0 failed, coverage 99.53%, ruff clean (Bad files lint-fixed by orchestrator), mypy clean"
+  ]
+}
