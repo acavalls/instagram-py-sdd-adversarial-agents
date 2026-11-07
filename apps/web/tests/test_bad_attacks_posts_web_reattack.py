@@ -65,11 +65,16 @@ def test_ratkw02_owner_cancel_edit_still_returns_the_card():
     assert b"post-card" in response.content
 
 
-def test_ratkw03_owner_feed_renders_own_media_url():
+def test_ratkw03_followed_feed_renders_media_url():
+    # Social delta: the home feed renders the followed users' media URLs.
+    from apps.social.services import FollowService
+
     alice = make_user("alice")
+    bob = make_user("bob")
+    FollowService().follow(follower=bob, following=alice)
     create_post_with_media(alice, "with media", "mine.gif")
     client = Client()
-    login(client, alice)
+    login(client, bob)
 
     response = client.get("/web/feed/")
 
@@ -109,9 +114,16 @@ def test_ratkw04_feed_huge_pages_answer_200(page_param):
 
 
 def test_ratkw05_feed_leaks_no_other_users_media_urls():
+    # Social delta: the feed is non-empty (bob follows carol) yet must not
+    # leak the non-followed alice's caption, media URL or post id.
+    from apps.social.services import FollowService
+
     alice = make_user("alice")
     bob = make_user("bob")
+    carol = make_user("carol")
+    FollowService().follow(follower=bob, following=carol)
     create_post_with_media(alice, "alice secret", "alice-secret-media.gif")
+    create_post_with_media(carol, "carol visible", "carol-media.gif")
     client = Client()
     login(client, bob)
 
@@ -122,3 +134,4 @@ def test_ratkw05_feed_leaks_no_other_users_media_urls():
     assert "alice secret" not in body
     assert "alice-secret-media" not in body
     assert str(alice.posts.get().pk) not in body
+    assert "carol visible" in body  # the followed user's post is shown

@@ -87,11 +87,21 @@ def _card_response(
     toast_message: str | None = None,
     toast_tags: str = "success",
 ) -> HttpResponse:
-    """Render the post card partial (optionally with an inline toast)."""
+    """Render the post card partial (optionally with an inline toast).
+
+    These HTMX flows always act on the caller's own post, so the card keeps
+    its edit/delete controls (``post_actions=True``); the home feed includes
+    the same card with ``post_actions=False`` (design decision 3).
+    """
     return render(
         request,
         "web/post_card.html",
-        {"post": post, "toast_message": toast_message, "toast_tags": toast_tags},
+        {
+            "post": post,
+            "toast_message": toast_message,
+            "toast_tags": toast_tags,
+            "post_actions": True,
+        },
     )
 
 

@@ -1,0 +1,251 @@
+{% extends "web/base_auth.html" %}
+
+{% block title %}@{{ profile_user.username }} · Instagram{% endblock %}
+
+{% block extra_style %}
+        .profile-card {
+            max-width: 620px;
+        }
+        .profile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+        .profile-username {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--ig-text);
+        }
+        .profile-stats {
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid var(--ig-border);
+            border-bottom: 1px solid var(--ig-border);
+            padding: 14px 0;
+            margin-bottom: 20px;
+        }
+        .stat {
+            text-align: center;
+            font-size: 14px;
+            color: var(--ig-text);
+        }
+        .stat-value {
+            font-weight: 600;
+        }
+        .stat-label {
+            color: #8e8e8e;
+            margin-left: 4px;
+        }
+        .stat-link {
+            text-decoration: none;
+            color: var(--ig-text);
+            cursor: pointer;
+        }
+        .profile-empty {
+            text-align: center;
+            font-size: 14px;
+            color: #8e8e8e;
+            padding: 24px 0;
+        }
+        .post-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .post-card {
+            border: 1px solid var(--ig-border);
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fff;
+            text-align: left;
+        }
+        .post-media {
+            width: 100%;
+            display: block;
+            aspect-ratio: 1;
+            object-fit: cover;
+        }
+        .post-body {
+            padding: 10px 14px 14px;
+        }
+        .post-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #8e8e8e;
+            margin-bottom: 6px;
+        }
+        .post-owner {
+            font-weight: 600;
+            color: var(--ig-text);
+        }
+        .post-caption {
+            font-size: 14px;
+            color: var(--ig-text);
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+        }
+        .post-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .post-action {
+            padding: 6px 12px;
+            font-size: 13px;
+            border: 1px solid var(--ig-border);
+            background: #fff;
+            color: var(--ig-text);
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .post-action-danger {
+            color: #ed4956;
+            border-color: #ed4956;
+        }
+        .post-caption-input {
+            width: 100%;
+            margin-bottom: 10px;
+            resize: vertical;
+        }
+        .feed-pagination {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            align-items: center;
+            margin-top: 18px;
+            font-size: 14px;
+        }
+        .feed-pagination a {
+            color: var(--ig-primary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .following-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        .following-modal-box {
+            background: #fff;
+            width: 100%;
+            max-width: 380px;
+            max-height: 70vh;
+            display: flex;
+            flex-direction: column;
+            border-radius: 12px;
+            padding: 18px 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        }
+        .following-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .following-modal-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--ig-text);
+        }
+        .following-modal-close {
+            background: none;
+            border: none;
+            font-size: 22px;
+            line-height: 1;
+            color: #8e8e8e;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .following-modal-search {
+            width: 100%;
+            padding: 8px 12px;
+            background: #fafafa;
+            border: 1px solid var(--ig-border);
+            border-radius: 6px;
+            font-size: 14px;
+            color: var(--ig-text);
+            margin-bottom: 12px;
+        }
+        .following-modal-list {
+            list-style: none;
+            overflow-y: auto;
+        }
+        .following-modal-item {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--ig-border);
+            font-size: 14px;
+        }
+        .following-modal-item a {
+            color: var(--ig-text);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .following-modal-name {
+            color: #8e8e8e;
+            margin-left: 6px;
+        }
+        .following-modal-empty {
+            text-align: center;
+            color: #8e8e8e;
+            border-bottom: none;
+        }
+{% endblock %}
+
+{% block auth_content %}
+<header class="profile-header">
+    <h2 class="profile-username">@{{ profile_user.username }}</h2>
+    {# Follow button only on other profiles, reflecting the current
+       relationship (social spec: Other user profile shows stats and follow
+       state); the HTMX toggle reuses the group-5 partial. #}
+    {% if not is_own_profile %}
+        {% include "web/_follow_button.html" with target_user=profile_user %}
+    {% endif %}
+</header>
+<ul class="profile-stats" aria-label="Profile stats">
+    <li class="stat">
+        <span class="stat-value" id="stat-posts">{{ posts_count }}</span>
+        <span class="stat-label">posts</span>
+    </li>
+    <li class="stat">
+        <span class="stat-value" id="stat-followers">{{ followers_count }}</span>
+        <span class="stat-label">followers</span>
+    </li>
+    <li class="stat">
+        {# Trigger for the following-list modal (social spec: Following list):
+            an HTMX get into the #following-modal placeholder below, same
+            hx-get/hx-target/hx-swap convention as the card partials. #}
+        <a class="stat-link" id="following-count-link" href="#"
+           hx-get="{% url 'web:following-list' profile_user.pk %}"
+           hx-target="#following-modal" hx-swap="outerHTML">
+            <span class="stat-value">{{ following_count }}</span>
+            <span class="stat-label">following</span>
+        </a>
+    </li>
+</ul>
+<div class="post-grid">
+    {% for post in posts %}
+        {# The edit/delete controls are owner-only: the owner's profile grid
+           renders the shared card with post_actions=True, visitors' grids
+           without them (social spec: Own profile shows stats and editable
+           grid; design decision 8). #}
+        {% include "web/post_card.html" with post_actions=is_own_profile %}
+    {% empty %}
+        <p class="profile-empty">No posts yet.</p>
+    {% endfor %}
+</div>
+<nav class="feed-pagination" aria-label="Profile pagination">
+    {% if prev_page %}<a href="?page={{ prev_page }}">Previous</a>{% endif %}
+    <span>Page {{ page }}</span>
+    {% if next_page %}<a href="?page={{ next_page }}">Next</a>{% endif %}
+</nav>
+{# Placeholder the following-list modal is swapped into (social spec:
+   Following list); empty until the following-count-link trigger fetches it. #}
+<div id="following-modal"></div>
+{% endblock %}

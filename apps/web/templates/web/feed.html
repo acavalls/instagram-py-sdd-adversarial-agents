@@ -92,6 +92,29 @@
             color: #8e8e8e;
             padding: 24px 0;
         }
+        .suggestions-panel {
+            border-top: 1px solid var(--ig-border);
+            margin-top: 22px;
+            padding-top: 16px;
+        }
+        .suggestions-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #8e8e8e;
+            margin-bottom: 10px;
+        }
+        .suggestions-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .suggestion-link {
+            color: var(--ig-primary);
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+        }
         .feed-pagination {
             display: flex;
             justify-content: center;
@@ -117,9 +140,14 @@
 </div>
 <div class="post-grid" id="post-grid">
     {% for post in posts %}
-        {% include "web/post_card.html" %}
+        {# Home cards show other users' posts: the edit/delete controls stay on the owner's profile grid (design decision 3). #}
+        {% include "web/post_card.html" with post_actions=False %}
     {% empty %}
-        <p class="feed-empty">No posts yet — create your first post!</p>
+        {% if follows_nobody %}
+            <p class="feed-empty" id="feed-empty-state">You're not following anyone yet — discover accounts to follow in the suggestions below.</p>
+        {% else %}
+            <p class="feed-empty">No posts from the people you follow yet.</p>
+        {% endif %}
     {% endfor %}
 </div>
 <nav class="feed-pagination" aria-label="Feed pagination">
@@ -127,4 +155,21 @@
     <span>Page {{ page }}</span>
     {% if next_page %}<a href="?page={{ next_page }}">Next</a>{% endif %}
 </nav>
+<section class="suggestions-panel" aria-label="Suggestions">
+    <h2 class="suggestions-title">Suggestions for you</h2>
+    {% if suggestions %}
+        <ul class="suggestions-list">
+            {% for suggestion in suggestions %}
+                <li class="suggestion-item">
+                    {# Suggestions link to the suggested user's profile page
+                       (social spec: User profile page — the profile URL landed
+                       with the profile task group). #}
+                    <a class="suggestion-link" href="{% url 'web:profile' suggestion.pk %}">@{{ suggestion.username }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="feed-empty">No suggestions right now.</p>
+    {% endif %}
+</section>
 {% endblock %}

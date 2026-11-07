@@ -1,0 +1,37 @@
+{# Following-list modal (social spec: Following list, design decision 9).
+   Swapped with outerHTML into the #following-modal placeholder on the
+   profile page (same hx-get/hx-target/hx-swap convention as the posts web
+   layer's card partials). The search input re-fetches this same partial
+   with the q query on every keystroke; the profile whose list is shown is
+   always profile_user. #}
+<div id="following-modal" class="following-modal" role="dialog" aria-label="Following list">
+    <div class="following-modal-box">
+        <header class="following-modal-header">
+            <h3>Following</h3>
+            <button type="button" class="following-modal-close"
+                    aria-label="Close"
+                    onclick="document.getElementById('following-modal').outerHTML = ''">&times;</button>
+        </header>
+        <input type="search" class="following-modal-search" name="q" value="{{ q }}"
+               placeholder="Search" aria-label="Search following"
+               hx-get="{% url 'web:following-list' profile_user.pk %}"
+               hx-trigger="input changed delay:300ms, search"
+               hx-target="#following-modal" hx-swap="outerHTML">
+        <ul class="following-modal-list">
+            {% for followed_user in following_users %}
+                <li class="following-modal-item">
+                    <a href="{% url 'web:profile' followed_user.pk %}">@{{ followed_user.username }}</a>
+                    {% if followed_user.first_name or followed_user.last_name %}
+                        <span class="following-modal-name">
+                            {{ followed_user.first_name }} {{ followed_user.last_name }}
+                        </span>
+                    {% endif %}
+                </li>
+            {% empty %}
+                <li class="following-modal-item following-modal-empty">
+                    {% if q %}No results for "{{ q }}".{% else %}Not following anyone yet.{% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>

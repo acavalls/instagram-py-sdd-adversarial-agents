@@ -1,8 +1,10 @@
-"""Web UI views for registration and authentication (thin, design decision 5).
+"""Web UI views for registration, authentication and the home feed (thin,
+design decision 5).
 
 Field-format rules (password length, username format, email shape) are checked
 here before calling the use case; identity-duplicate rules and authentication
-live in the use cases and the model (design decisions 2 and 4).
+live in the use cases and the model (design decisions 2 and 4). The feed view
+only composes the social use cases and shapes the pagination window.
 """
 
 from django.contrib import messages
@@ -22,15 +24,20 @@ from apps.accounts.use_cases import (
     RegisterUserInput,
     RegisterUserUseCase,
 )
-from apps.posts.use_cases import ListPostsInput, ListPostsUseCase
+from apps.social.use_cases import (
+    GetUserSuggestionsInput,
+    GetUserSuggestionsUseCase,
+    ListFeedInput,
+    ListFeedUseCase,
+)
 from apps.web.post_views import FEED_PAGE_URL, current_user
 
 # The login view is implemented in a later task group; the literal keeps this
 # group self-contained (it matches LOGIN_URL in the settings).
 LOGIN_PAGE_URL = "/web/login/"
 # FEED_PAGE_URL ("/web/feed/") lives in apps/web/post_views.py (posts web
-# layer); the feed page renders the logged-in user's own posts and becomes
-# the followed-users feed in a later change.
+# layer); the feed page renders the followed-users feed (social spec).
+
 
 REGISTRATION_SUCCESS_TOAST = "Account created successfully. Please login."
 
@@ -38,8 +45,9 @@ LOGIN_SUCCESS_TOAST = "Logged in successfully"
 
 LOGOUT_SUCCESS_TOAST = "You have been logged out"
 
-# Page size of the personal feed window (posts spec: Post listing).
-FEED_PAGE_SIZE = 10
+# Page size of the followed-users feed window (social spec: Followed-users
+# feed; design decision 4 keeps the page-param prev/next window).
+FEED_PAGE_SIZE = 12
 
 # Same message the API path reports (DRF EmailField default, serializers.py)
 # so both registration locations answer with identical wording.
@@ -119,21 +127,30 @@ def logout(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def feed(request: HttpRequest) -> HttpResponse:
-    """Personal feed page: the logged-in user's own posts as post cards,
-    newest first, with a simple page-based limit/offset window (posts spec:
-    Post listing — Personal feed on the feed page; user-accounts delta:
-    Authenticated landing placeholder)."""
+    """Followed-users feed page: posts from the users the logged-in user
+    follows, newest first, with the same page-based prev/next window
+    (social spec: Followed-users feed; design decisions 3 and 4). The
+    sidebar suggests up to 5 accounts the user does not follow (social
+    spec: User suggestions), and when the user follows nobody the template
+    shows an empty state pointing to the suggestions (social spec: Empty
+    feed state)."""
     try:
         page = int(request.GET.get("page", "1"))
     except ValueError:
         page = 1
     page = max(page, 1)
     offset = (page - 1) * FEED_PAGE_SIZE
-    output = ListPostsUseCase().execute(
-        ListPostsInput(user=current_user(request), limit=FEED_PAGE_SIZE, offset=offset)
+    user = current_user(request)
+    output = ListFeedUseCase().execute(
+        ListFeedInput(user=user, limit=FEED_PAGE_SIZE, offset=offset)
     )
+    suggestions = GetUserSuggestionsUseCase().execute(GetUserSuggestionsInput(user=user)).users
     context = {
         "posts": output.posts,
+        "suggestions": suggestions,
+        # Presentation-only branch for the empty state (social spec: Empty
+        # feed state): a state lookup, not a business rule.
+        "follows_nobody": not user.following.exists(),
         "page": page,
         "prev_page": page - 1 if page > 1 else None,
         # A full window implies there may be more posts on the next page.

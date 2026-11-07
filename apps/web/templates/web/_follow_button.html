@@ -1,0 +1,21 @@
+{# Follow button partial (social spec: Follow and unfollow actions, design
+   decision 6). The HTMX swap replaces the whole wrapper (button + inline
+   toast), so each response toggles the button in place AND confirms with a
+   toast; on failure the caller re-renders the current state, so the button
+   keeps it while the toast shows the failure reason. #}
+<span class="follow-button-wrap" {% if toast_message %}aria-live="polite"{% endif %}>
+    {% if toast_message %}
+        <div class="toast {{ toast_tags }}">{{ toast_message }}</div>
+    {% endif %}
+    {% if is_following %}
+        <button class="follow-button follow-button-following" type="button"
+                hx-post="{% url 'web:unfollow-user' target_user.pk %}"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                hx-target="closest .follow-button-wrap" hx-swap="outerHTML">Following</button>
+    {% else %}
+        <button class="follow-button" type="button"
+                hx-post="{% url 'web:follow-user' target_user.pk %}"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                hx-target="closest .follow-button-wrap" hx-swap="outerHTML">Follow</button>
+    {% endif %}
+</span>

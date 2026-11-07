@@ -1,5 +1,6 @@
 """Web post view tests, named after the spec scenarios they cover
-(task group 4, apps/web/post_views.py + apps/web/views.py:feed)."""
+(apps/web/post_views.py + apps/web/views.py:feed — the followed-users feed
+lives in the social change, task group 4)."""
 
 import uuid
 from typing import Any
@@ -9,6 +10,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from apps.accounts.models import User
 from apps.posts.models import CAPTION_MAX_LENGTH, Post
+from apps.social.services import FollowService
 from apps.web.post_views import PLACEHOLDER_CAPTIONS, PLACEHOLDER_GIF_BYTES
 
 pytestmark = pytest.mark.django_db
@@ -80,18 +82,22 @@ def test_web_post_actions_require_login(client):
     assert Post.objects.filter(pk=post.pk).exists()
 
 
-# --- Spec scenario: Personal feed on the feed page ---------------------------
+# --- Spec scenario: Feed shows followed users' posts (social delta) ----------
 
 
-def test_personal_feed_on_the_feed_page(client):
-    """Spec scenario: Personal feed on the feed page — the feed page shows the
-    logged-in user's own posts as post cards (media, caption, owner,
-    timestamp), newest first, and never another user's posts."""
+def test_followed_feed_shows_only_followed_users_posts(client):
+    """Spec scenario: Feed shows followed users' posts — the home page shows
+    the followed users' posts as post cards (media, caption, owner,
+    timestamp), newest first; not the user's own posts and not posts from
+    users they do not follow (social spec: Followed-users feed)."""
     user = make_user()
-    other = make_user(username="bob", email="bob@example.com")
-    older = make_post(user, "older post")
-    newer = make_post(user, "newer post")
-    make_post(other, "bob secret post")
+    followed = make_user(username="bob", email="bob@example.com")
+    stranger = make_user(username="carol", email="carol@example.com")
+    FollowService().follow(follower=user, following=followed)
+    older = make_post(followed, "older post")
+    newer = make_post(followed, "newer post")
+    make_post(stranger, "carol secret post")
+    make_post(user, "my own post")
     # Force a clear creation order (auto_now_add timestamps are equal within
     # the same test tick).
     Post.objects.filter(pk=older.pk).update(created_at="2024-01-01T10:00:00Z")
@@ -104,20 +110,23 @@ def test_personal_feed_on_the_feed_page(client):
     content = response.content.decode()
     assert "newer post" in content
     assert "older post" in content
-    assert "bob secret post" not in content
+    assert "carol secret post" not in content
+    assert "my own post" not in content  # own posts stay on /api/posts/ and the profile grid
     # Newest first: the newer caption appears before the older one.
     assert content.index("newer post") < content.index("older post")
-    # Cards expose owner and timestamp.
-    assert "alice" in content
+    # Cards expose the followed owner and timestamp.
+    assert "bob" in content
     assert "post-card" in content
 
 
-def test_personal_feed_renders_media_images(client):
-    """The post cards render the media image through MEDIA_URL."""
+def test_followed_feed_renders_media_images(client):
+    """The post cards render the followed users' media through MEDIA_URL."""
     user = make_user()
+    followed = make_user(username="bob", email="bob@example.com")
+    FollowService().follow(follower=user, following=followed)
     from apps.posts.services import PostService
 
-    PostService().create(owner=user, caption="with media", media_files=[make_media_file()])
+    PostService().create(owner=followed, caption="with media", media_files=[make_media_file()])
 
     client.force_login(user)
     response = client.get(FEED_URL)
@@ -128,12 +137,16 @@ def test_personal_feed_renders_media_images(client):
     assert "<img" in content
 
 
-def test_personal_feed_pagination_window(client):
-    """Spec scenario: Pagination window (web path) — a page returns only the
-    requested window without duplicates across pages."""
+def test_followed_feed_pagination_window(client):
+    """Spec scenario: Feed ordered newest first with pagination (web path) —
+    a page returns only the requested window without duplicates across
+    pages (social spec: Followed-users feed)."""
     user = make_user()
-    for index in range(12):
-        post = make_post(user, f"post number {index}")
+    followed = make_user(username="bob", email="bob@example.com")
+    FollowService().follow(follower=user, following=followed)
+    # Page size 12: 13 posts fill page 1 and leave one for page 2.
+    for index in range(13):
+        post = make_post(followed, f"post number {index}")
         Post.objects.filter(pk=post.pk).update(created_at=f"2024-01-{index + 1:02d}T10:00:00Z")
 
     client.force_login(user)
@@ -144,10 +157,10 @@ def test_personal_feed_pagination_window(client):
     second_content = second_page.content.decode()
     assert first_page.status_code == 200
     assert second_page.status_code == 200
-    # 12 posts, page size 10: page 1 holds the 10 newest, page 2 the last 2.
-    assert first_content.count("post number") == 10
-    assert second_content.count("post number") == 2
-    assert "post number 11" in first_content  # newest
+    # Page 1 holds the 12 newest, page 2 the last one.
+    assert first_content.count("post number") == 12
+    assert second_content.count("post number") == 1
+    assert "post number 12" in first_content  # newest
     assert "post number 0" not in first_content  # oldest is on page 2
     assert "post number 0" in second_content
     assert 'href="?page=2"' in first_content  # next control
@@ -274,8 +287,9 @@ def test_web_delete_by_non_owner_rejected(client):
 
 
 def test_web_submit_edit_rejects_over_long_caption(client):
-    """A crafted POST with a caption over the limit is rejected with a field
-    error toast instead of a 500 (field-format rule checked in the web layer)."""
+    """Spec scenario: Caption length limit — a crafted POST with a caption
+    over the limit is rejected with a field error toast instead of a 500
+    (field-format rule checked in the web layer, mirroring Post.save())."""
     user = make_user()
     post = make_post(user, "short caption")
     client.force_login(user)

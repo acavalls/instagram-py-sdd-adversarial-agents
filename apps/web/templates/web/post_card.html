@@ -13,14 +13,17 @@
             <span class="post-timestamp">{{ post.created_at|date:"d M Y, H:i" }}</span>
         </div>
         <p class="post-caption">{{ post.caption }}</p>
-        <div class="post-actions">
-            <button class="post-action"
-                    hx-get="{% url 'web:post-edit-form' post.pk %}"
-                    hx-target="closest .post-card" hx-swap="outerHTML">Edit</button>
-            <button class="post-action post-action-danger"
-                    hx-post="{% url 'web:post-delete' post.pk %}"
-                    hx-confirm="Delete this post?"
-                    hx-target="closest .post-card" hx-swap="outerHTML">Delete</button>
-        </div>
+        {# The edit/delete controls are owner-only (the owner's profile grid and the HTMX edit flows pass post_actions=True); the home feed shows other users' posts, so it renders the card without them (design decision 3). #}
+        {% if post_actions %}
+            <div class="post-actions">
+                <button class="post-action"
+                        hx-get="{% url 'web:post-edit-form' post.pk %}"
+                        hx-target="closest .post-card" hx-swap="outerHTML">Edit</button>
+                <button class="post-action post-action-danger"
+                        hx-post="{% url 'web:post-delete' post.pk %}"
+                        hx-confirm="Delete this post?"
+                        hx-target="closest .post-card" hx-swap="outerHTML">Delete</button>
+            </div>
+        {% endif %}
     </div>
 </article>

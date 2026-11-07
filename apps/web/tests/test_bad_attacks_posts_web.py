@@ -254,28 +254,39 @@ def test_atk_w05a_feed_survives_hostile_page_params(page_param):
     assert response.status_code == 200, (page_param, response.status_code)
 
 
-def test_atk_w05b_feed_shows_only_own_posts():
+def test_atk_w05b_feed_shows_only_followed_users_posts():
+    # Social delta: the home feed shows the followed users' posts — never the
+    # visitor's own posts and never posts from users they do not follow.
+    from apps.social.services import FollowService
+
     alice = make_user("alice")
     bob = make_user("bob")
-    create_post(alice, caption="alice only")
-    create_post(bob, caption="bob secret")
+    carol = make_user("carol")
+    FollowService().follow(follower=alice, following=bob)
+    create_post(bob, caption="bob visible")
+    create_post(carol, caption="carol secret")
+    create_post(alice, caption="alice own")
     client = Client()
     login(client, alice)
 
     response = client.get("/web/feed/")
 
     assert response.status_code == 200
-    assert b"alice only" in response.content
-    assert b"bob secret" not in response.content
+    assert b"bob visible" in response.content
+    assert b"carol secret" not in response.content
+    assert b"alice own" not in response.content
 
 
 def test_atk_w05c_feed_paginates_without_duplicates():
     from django.utils import timezone
 
     from apps.posts.models import Post as PostModel
+    from apps.social.services import FollowService
 
     alice = make_user("alice")
-    posts = [create_post(alice, caption=f"page-post-{i}") for i in range(5)]
+    bob = make_user("bob")
+    FollowService().follow(follower=alice, following=bob)
+    posts = [create_post(bob, caption=f"page-post-{i}") for i in range(5)]
     tied = timezone.now()
     PostModel.objects.filter(pk__in=[p.pk for p in posts]).update(created_at=tied)
     client = Client()
