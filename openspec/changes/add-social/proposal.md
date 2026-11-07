@@ -51,6 +51,11 @@ drf-spectacular. Code already exists; this change only lands the spec.
   the followed-users feed; own posts remain on `GET /api/posts/` and the
   owner's profile grid), ADDED `Post media storage` documenting the existing
   `post_media/` upload path convention.
+- `user-accounts`: MODIFIED `Authenticated landing placeholder` (the landing
+  feed page shows the followed-users feed owned by the `social` capability,
+  superseding the own-posts placeholder semantics). Added during the global
+  verify: the original requirement normatively described the own-posts feed
+  and would have contradicted the posts/social deltas after archive.
 
 **Deliberately out of scope:** stories (`add-stories`), followers list modal
 (only the following list, as in the reference), notifications, real file
@@ -70,6 +75,8 @@ TS-002 stay pending for a future regularization cycle.
 - `posts`: home page semantics move to the social capability (home shows the
   followed-users feed instead of own posts); media storage conventions
   documented as a new requirement.
+- `user-accounts`: the authenticated landing placeholder now shows the
+  followed-users feed defined in the social capability.
 
 ## Impact
 

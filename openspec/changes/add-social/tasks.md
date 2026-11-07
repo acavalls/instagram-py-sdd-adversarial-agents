@@ -39,3 +39,6 @@
 ## 9. Regularization: seed data and api-docs tests (social — Followed-users feed, User profile page; api-docs — OpenAPI documentation)
 - [x] 9.1 `seed_demo_data` management command: demo users, follows among them, posts with generated placeholders (via services/use cases; skips if demo users exist); test: command creates the ecosystem and is idempotent on re-run
 - [x] 9.2 Tests: `/schema/?format=json` includes auth and posts paths and `/docs/` renders 200 (scenarios: Schema endpoint serves the API contract, Docs UI renders)
+
+## 10. Regularization: user-accounts landing delta (user-accounts — Authenticated landing placeholder MODIFIED)
+- [x] 10.1 Delta `specs/user-accounts/spec.md`: the landing feed page shows the followed-users feed (social capability) instead of own posts; scenario traceability: "Logged-in user reaches the placeholder" pinned by test_feed_shows_followed_users_posts_as_cards, "Placeholder requires login" by the existing feed login-redirect test (added during global verify; no code change)

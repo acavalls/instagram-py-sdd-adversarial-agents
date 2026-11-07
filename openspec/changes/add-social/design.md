@@ -110,6 +110,19 @@ are independent of the social layer.
     capability lands as a living spec with its two scenario tests. Decision:
     agent-decided (2026-11-07).
 
+13. **user-accounts delta added during global verify** (2026-11-07): the
+    global Ugly verify found that the living requirement
+    "Authenticated landing placeholder" still normatively described the
+    own-posts feed page, which would contradict the posts/social deltas
+    after archive. The change gains a MODIFIED delta for that requirement:
+    the landing feed page shows the followed-users feed owned by the
+    `social` capability; own posts stay reachable via the profile grid and
+    the posts API. No code change (the implemented behavior already
+    matches); the scenario "Logged-in user reaches the placeholder" is
+    pinned by the existing followed-feed test
+    (`apps/web/tests/test_feed_view.py::test_feed_shows_followed_users_posts_as_cards`,
+    plus the login-redirect test for "Placeholder requires login").
+
 ## Validation boundaries
 
 - HTTP request format at the edge (views/serializers): page number parsing,
