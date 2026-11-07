@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     # Local apps (domain-organized, per openspec/config.yaml)
     "apps.accounts",
     "apps.posts",
+    "apps.social",
     "apps.web",
 ]
 
