@@ -1,0 +1,69 @@
+{
+  "change": "2026-11-08-05-add-admin-console",
+  "status": "APPLY_DONE",
+  "current_group": null,
+  "current_iteration": 1,
+  "budget": {
+    "good_ugly_max_iterations_per_group": 3,
+    "bad_max_attack_iterations": 3,
+    "bad_max_wall_clock_minutes": 6,
+    "bad_max_test_runner_executions": 6
+  },
+  "budget_usage": {
+    "bad_minutes_used": 4,
+    "bad_test_runs_used": 5,
+    "bad_iterations_used": 1
+  },
+  "groups": {
+    "1": {
+      "status": "APPROVED",
+      "good_iterations": 2,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "REJECTED",
+          "deviations": [
+            "DEV-001 search facet untested"
+          ]
+        },
+        {
+          "iteration": 2,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "2": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    }
+  },
+  "bad": {
+    "status": "SURVIVES",
+    "verdicts": [
+      {
+        "iteration": 1,
+        "verdict": "SURVIVES",
+        "bugs": [],
+        "attack_tests": 14,
+        "skipped_sandbox": 0,
+        "notes": "4 minor observations (bare-staff 200 index, story add refused by invariant, user-delete cascades, probe confound)"
+      }
+    ]
+  },
+  "log": [
+    "2026-11-08: cycle 5 state initialized; planning committed (706dbaa) and pushed",
+    "2026-11-08: this change RESOLVES carried finding F-08 (admin route now specified by the admin-console capability)",
+    "2026-11-08: group 1 REJECTED iter 1 (DEV-001) -> fixed -> APPROVED iter 2 (429 passed, cov 99.11%)",
+    "2026-11-08: group 2 gates green (443 passed, 2 skipped, 1 xfailed, cov 99.11%)",
+    "2026-11-08: Bad SURVIVES iteration 1 (14 attack tests, 0 bugs; budget 5/6 runs, ~4 min)",
+    "2026-11-08: orchestrator removed Bad temporary probe file test_bad_attack_probe_tmp.py; normalized attack tests (ruff format)"
+  ]
+}
