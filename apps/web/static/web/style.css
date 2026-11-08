@@ -17,20 +17,64 @@ body {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
+    background: linear-gradient(135deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%);
 }
 
 .auth-wrapper {
     width: 100%;
     max-width: 380px;
     padding: 1rem;
+    box-sizing: border-box;
 }
 
 .auth-card {
     background: var(--ig-card);
     border: 1px solid var(--ig-border);
-    border-radius: 8px;
-    padding: 2rem;
+    border-radius: 12px;
+    padding: 2.5rem 2rem;
     text-align: center;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.auth-card h1 {
+    margin: 0 0 1.25rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #262626;
+}
+
+.auth-card input {
+    width: 100%;
+    margin-bottom: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--ig-border);
+    border-radius: 6px;
+    background: var(--ig-bg);
+    font: inherit;
+    box-sizing: border-box;
+}
+
+.auth-card input:focus {
+    outline: none;
+    border-color: #8e8e8e;
+}
+
+.auth-card button {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.6rem;
+    border: none;
+    border-radius: 6px;
+    background: var(--ig-accent);
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.auth-card button:hover {
+    filter: brightness(1.1);
 }
 
 .auth-logo i {
@@ -39,6 +83,25 @@ body {
 
 .auth-logo {
     margin-bottom: 0.75rem;
+}
+
+.auth-logo-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.auth-logo-brand i {
+    font-size: 1.75rem;
+}
+
+.auth-logo-brand::after {
+    content: "django_ig";
+    font-family: "Grand Hotel", cursive;
+    font-size: 2.5rem;
+    line-height: 1;
+    color: #262626;
 }
 
 .auth-wrapper-wide {
