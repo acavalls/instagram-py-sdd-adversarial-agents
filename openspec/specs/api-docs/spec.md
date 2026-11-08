@@ -15,8 +15,8 @@ that lists the registered API endpoints.
 
 #### Scenario: Schema endpoint serves the API contract
 - **WHEN** a client requests `/schema/?format=json`
-- **THEN** the system responds 200 with an OpenAPI document including the authentication operations (`POST /api/auth/register/`, `POST /api/auth/login/`, token refresh)
+- **THEN** the system responds 200 with an OpenAPI document including the authentication and posts paths
 
 #### Scenario: Docs UI renders
 - **WHEN** a user opens `/docs/`
-- **THEN** the system responds 200 with the Swagger UI page listing the registered authentication operations
+- **THEN** the system responds 200 with the Swagger UI page listing the registered authentication and posts operations
