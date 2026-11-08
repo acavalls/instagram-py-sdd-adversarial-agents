@@ -10,6 +10,8 @@ Targets the three declared leniencies in the user-accounts delta:
 Plus regression sanity: plain JWT login and 409 conflict mapping.
 """
 
+from datetime import UTC
+
 import pytest
 from rest_framework.test import APIClient
 
@@ -106,12 +108,12 @@ class TestSessionFallbackAttacks:
 
     def test_expired_session_cookie_is_rejected(self):
         client = self._session_client()
-        from datetime import datetime, timedelta, timezone as dt_timezone
+        from datetime import datetime, timedelta
 
         from django.contrib.sessions.models import Session
 
         session = Session.objects.get(session_key=client.cookies["sessionid"].value)
-        session.expire_date = datetime.now(dt_timezone.utc) - timedelta(hours=1)
+        session.expire_date = datetime.now(UTC) - timedelta(hours=1)
         session.save()
 
         response = client.get(POSTS)

@@ -4,7 +4,7 @@
 
 Mini-regularization closing the cycle-6 audit's five low findings (C6-01..
 C6-05) plus the W-2 policy question. Documentation-first: no production
-code changes. Suite: 515 passed, 2 skipped, coverage 99.12%.
+code changes. Suite: 527 passed, 2 skipped, coverage 99.14% (includes Bad's 12 attack tests).
 
 ## Group results
 

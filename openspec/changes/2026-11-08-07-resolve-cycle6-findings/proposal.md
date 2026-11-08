@@ -37,7 +37,7 @@ audit to IN SYNC literal.
 
 ## Impact
 
-- Two delta requirements, three new scenarios, three tests renamed, two
+- Two delta requirements, three new scenarios, six tests renamed, two
   config.yaml lines, one workflow.md policy paragraph. No production code
   changes; no endpoint or behavior changes.
 

@@ -9,9 +9,9 @@
     "bad_max_test_runner_executions": 6
   },
   "budget_usage": {
-    "bad_minutes_used": 0,
-    "bad_test_runs_used": 0,
-    "bad_iterations_used": 0
+    "bad_minutes_used": 4,
+    "bad_test_runs_used": 1,
+    "bad_iterations_used": 1
   },
   "groups": {
     "1": {
@@ -61,6 +61,7 @@
   },
   "log": [
     "2026-11-08: cycle 7 initialized; planning committed; 3 new scenarios declared in user-accounts; W-2 policy default declared (every run counts)",
-    "2026-11-08: groups 1-2 APPROVED iter 1; Bad SURVIVES iter 1 (12 attacks, 0 bugs); suite 515 passed, cov 99.12%"
+    "2026-11-08: groups 1-2 APPROVED iter 1; Bad SURVIVES iter 1 (12 attacks, 0 bugs); suite 515 passed, cov 99.12%",
+    "2026-11-08: verify REJECTED (ruff gate red on Bad file + stale bookkeeping) -> lint normalized, gates re-run green (527/99.14%), artifacts corrected"
   ]
 }
