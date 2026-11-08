@@ -34,8 +34,8 @@
 
 ## Manual validation script (for the Sheriff)
 
-1. Create a staff user in the shell: `.venv/bin/python manage.py shell -c "from apps.accounts.models import User; u = User(username='staffer', email='s@x.io', is_staff=True, is_superuser=True); u.set_password('staffpass-1'); u.save()"` (avoids the broken createsuperuser, finding F-02).
+1. The dev superuser `bob` is ready in the dev database (created/updated out-of-band during manual validation: is_staff + is_superuser, password `bob-ig-pass-1`, stored hashed). NOTE: this is a one-off dev-DB fix — the config.yaml-declared `accounts.0003` bootstrap migration still does not exist (finding F-01) and `createsuperuser` remains broken (F-02); a fresh dev DB will NOT have bob.
 2. Anonymous window → `/admin/` → admin login page (no console).
-3. Log in as staffer → the index lists User, Post, Story, Follow; open each changelist, search (`q=`), open a change view and edit.
+3. Log in as bob → the index lists User, Post, Story, Follow; open each changelist, search (`q=`), open a change view and edit.
 4. Change a user's password through `/admin/accounts/user/<id>/password/`; confirm the user can log in with the new password from the web UI.
 5. Try to reach `/admin/posts/post/` from a logged-in NON-staff session → redirected to the admin login.
