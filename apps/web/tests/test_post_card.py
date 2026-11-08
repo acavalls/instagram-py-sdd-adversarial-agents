@@ -1,5 +1,6 @@
 import pytest
 from django.core.files.base import ContentFile
+from django.urls import reverse
 
 from apps.accounts.models import User
 from apps.posts.models import Post
@@ -49,11 +50,13 @@ def _feed_with_followed_post(client) -> User:
 class TestPostCardAnatomy:
     def test_card_header_shows_owner_avatar_and_username_link(self, client) -> None:
         _feed_with_followed_post(client)
+        bob = User.objects.get(username="bob")
+        profile_href = reverse("web:profile", args=[bob.pk])
 
         html = client.get(FEED_URL).content.decode()
 
         assert 'data-testid="post-avatar"' in html
-        assert 'href="/web/users/bob/"' in html
+        assert html.count(f'href="{profile_href}"') == 2
         assert 'data-testid="post-username"' in html
         assert ">bob</a>" in html
 

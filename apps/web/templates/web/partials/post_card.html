@@ -1,8 +1,8 @@
 <article class="post-card" data-testid="post-card" id="post-{{ post.id }}">
     <header class="post-card-header">
-        <a class="post-avatar" href="/web/users/{{ post.owner.username }}/"
+        <a class="post-avatar" href="{% url 'web:profile' post.owner.pk %}"
            data-testid="post-avatar" aria-hidden="true">{{ post.owner.username|first|upper }}</a>
-        <a class="post-username" href="/web/users/{{ post.owner.username }}/"
+        <a class="post-username" href="{% url 'web:profile' post.owner.pk %}"
            data-testid="post-username">{{ post.owner.username }}</a>
         {% if post.owner_id == user.pk %}
         <details class="post-card-menu" data-testid="post-menu">
