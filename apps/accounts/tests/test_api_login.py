@@ -36,6 +36,17 @@ class TestLoginAPI:
         assert data["access"]
         assert data["refresh"]
 
+    def test_api_login_trims_the_username_before_authentication(self, client) -> None:
+        _register(client)
+
+        response = _login(client, "  alice  ", "password123")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["user"]["username"] == "alice"
+        assert data["access"]
+        assert data["refresh"]
+
     def test_failed_api_login(self, client) -> None:
         _register(client)
 

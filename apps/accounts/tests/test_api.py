@@ -97,6 +97,54 @@ class TestRegisterAPI:
         assert response.status_code == 400
         assert "email" in response.json()
 
+    def test_api_registration_trims_the_email_whitespace(self) -> None:
+        client = APIClient()
+
+        response = client.post(
+            REGISTER_URL,
+            {"username": "alice", "email": "  padded@example.com  ", "password": "password123"},
+            format="json",
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["email"] == "padded@example.com"
+        assert User.objects.get(username="alice").email == "padded@example.com"
+
+        # Uniqueness is enforced on the trimmed value.
+        duplicate = client.post(
+            REGISTER_URL,
+            {"username": "bob", "email": "padded@example.com", "password": "password123"},
+            format="json",
+        )
+
+        assert duplicate.status_code == 409
+        assert duplicate.json() == {"error": "Email already registered"}
+
+    def test_api_endpoints_accept_session_cookie_authentication(self) -> None:
+        client = APIClient()
+        client.post(
+            REGISTER_URL,
+            {"username": "alice", "email": "alice@example.com", "password": "password123"},
+            format="json",
+        )
+
+        session_client = APIClient()
+        session_client.force_login(User.objects.get(username="alice"))
+
+        response = session_client.get("/api/posts/")
+
+        assert response.status_code == 200
+        assert response.json() == []
+
+        anonymous = APIClient()
+
+        anonymous_response = anonymous.get("/api/posts/")
+
+        # 403, not 401: SessionAuthentication (first in the defaults) does not
+        # issue a WWW-Authenticate challenge for anonymous requests.
+        assert anonymous_response.status_code == 403
+
     def test_api_registration_does_not_require_authentication(self) -> None:
         client = APIClient()
 
