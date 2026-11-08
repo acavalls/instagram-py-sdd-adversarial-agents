@@ -26,7 +26,7 @@ class TestWebRegisterView:
         assert 'name="password"' in html
         assert 'action="/web/register/"' in html
 
-    def test_register_page_renders_auth_layout(self, client) -> None:
+    def test_register_renders_the_auth_card(self, client) -> None:
         response = client.get(REGISTER_URL)
 
         assert response.status_code == 200

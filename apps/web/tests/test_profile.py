@@ -91,7 +91,7 @@ class TestUnknownProfile:
 
 @pytest.mark.django_db
 class TestSidebarProfileLink:
-    def test_topbar_links_to_own_profile(self, client) -> None:
+    def test_profile_link_points_to_own_profile(self, client) -> None:
         user = _register_and_login(client)
 
         html = client.get(FEED_URL).content.decode()

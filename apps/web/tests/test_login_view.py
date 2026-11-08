@@ -22,7 +22,7 @@ def _register(client, username: str, email: str, password: str = "password123"):
 
 @pytest.mark.django_db
 class TestWebLoginView:
-    def test_login_page_renders_form(self, client) -> None:
+    def test_login_renders_the_auth_card(self, client) -> None:
         response = client.get(LOGIN_URL)
 
         assert response.status_code == 200

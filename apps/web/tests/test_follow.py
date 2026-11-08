@@ -68,7 +68,7 @@ class TestWebFollowViaHtmx:
 
 @pytest.mark.django_db
 class TestWebFollowFailureShowsTheCause:
-    def test_duplicate_follow_keeps_state_with_error_toast(self, client: Client) -> None:
+    def test_web_follow_failure_shows_the_cause(self, client: Client) -> None:
         bob = _register_and_login(client, "bob")
         alice = _register_and_login(client, "alice")
         FollowService().follow(follower=alice, following=bob)

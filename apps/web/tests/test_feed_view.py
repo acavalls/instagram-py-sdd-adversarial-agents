@@ -94,7 +94,7 @@ class TestFeedLanding:
 
 @pytest.mark.django_db
 class TestFeedContent:
-    def test_feed_shows_followed_users_posts(self, client) -> None:
+    def test_personal_feed_on_the_feed_page(self, client) -> None:
         user = _register_and_login(client)
         author = _register_and_login(client, "bob")
         stranger = _register_and_login(client, "carol")
@@ -145,7 +145,7 @@ class TestFeedContent:
         assert 'data-username="bob"' in html
         assert html.index('data-testid="stories-bar"') < html.index('data-testid="post-card"')
 
-    def test_feed_ordered_newest_first_with_pagination(self, client) -> None:
+    def test_home_feed_loads_more_posts_on_scroll(self, client) -> None:
         user = _register_and_login(client)
         first_author = _register_and_login(client, "bob")
         second_author = _register_and_login(client, "carol")
