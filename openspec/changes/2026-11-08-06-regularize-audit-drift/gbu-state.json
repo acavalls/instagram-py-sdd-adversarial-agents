@@ -1,0 +1,122 @@
+{
+  "change": "2026-11-08-06-regularize-audit-drift",
+  "status": "APPLY_IN_PROGRESS",
+  "current_group": "5",
+  "current_iteration": 1,
+  "budget": {
+    "good_ugly_max_iterations_per_group": 3,
+    "bad_max_attack_iterations": 3,
+    "bad_max_wall_clock_minutes": 6,
+    "bad_max_test_runner_executions": 6
+  },
+  "budget_usage": {
+    "bad_minutes_used": 0,
+    "bad_test_runs_used": 0,
+    "bad_iterations_used": 0
+  },
+  "groups": {
+    "1": {
+      "status": "APPROVED",
+      "good_iterations": 2,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "REJECTED",
+          "deviations": [
+            "DEV-001 email domain normalization broke byte-exact claim",
+            "DEV-002 tasks wording"
+          ]
+        },
+        {
+          "iteration": 2,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "2": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "3": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "4": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "5": {
+      "status": "DONE",
+      "good_iterations": 1,
+      "ugly_verdicts": []
+    }
+  },
+  "bad": {
+    "status": "BUDGET_EXHAUSTED_AFTER_FIXES",
+    "verdicts": [
+      {
+        "iteration": 1,
+        "verdict": "BROKEN",
+        "bugs": [
+          "BUG-001 hash-lookalike raw password stored verbatim (HIGH)"
+        ],
+        "budget": {
+          "minutes": 5,
+          "runs": 4
+        }
+      },
+      {
+        "iteration": 2,
+        "verdict": "BROKEN",
+        "bugs": [
+          "BUG-002 decodable md5-shaped raw stored verbatim after decode-guard fix (HIGH)"
+        ],
+        "budget": {
+          "minutes": 2,
+          "runs": 2
+        }
+      }
+    ],
+    "budget": {
+      "minutes_used": 7,
+      "runs_used": 6,
+      "iterations_used": 3,
+      "max_iterations": 3,
+      "max_runs": 6,
+      "max_minutes": 6
+    },
+    "note": "Budget exhausted (runs 6/6, iterations 3/3; minutes 7/6 reported honestly). BUG-002 fixed after budget by Good (provenance-based hashing: _password_is_hash marker + _original_password load tracking); Bad repro tests 30/30 green verified independently by the orchestrator (512 passed suite, cov 99.12%)."
+  },
+  "log": [
+    "2026-11-08: cycle 6 (regularization) state initialized; planning committed and pushed",
+    "2026-11-08: scope = 14 declared scenarios across 6 capabilities + code fixes (N-05 card links, F-02 manager, F-03 bulk hashing, F-01 bob migration DEBUG-guarded, S-01 active nav) + config F-10 rewording",
+    "2026-11-08: out of scope by declaration: W-2 budget policy, visual styling targets",
+    "2026-11-08: group 1 REJECTED iter 1 (DEV-001/002) -> fixed -> APPROVED iter 2 (461 passed, cov 99.09%)",
+    "2026-11-08: group 2 APPROVED iter 1 (463 passed, cov 99.09%)",
+    "2026-11-08: group 3 APPROVED iter 1 (467 passed); group 4 APPROVED iter 1 (471 passed, cov 99.12%)",
+    "2026-11-08: group 5 config rewording done; gates green",
+    "2026-11-08: Bad iter 1 BROKEN (BUG-001) -> Good fix (decode guard) -> Bad iter 3 BROKEN (BUG-002) -> Good provenance fix -> Bad repros 30/30 green (orchestrator-verified); Bad budget exhausted"
+  ]
+}
