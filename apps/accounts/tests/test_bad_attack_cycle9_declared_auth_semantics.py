@@ -80,7 +80,8 @@ class TestSessionWinsOverPresentedJWT:
         client = self._session_client()
 
         response = self._csrf_post(
-            client, {"caption": "session wins"},
+            client,
+            {"caption": "session wins"},
             HTTP_AUTHORIZATION="Bearer not.a.valid.jwt",
         )
 
@@ -98,7 +99,8 @@ class TestSessionWinsOverPresentedJWT:
         )
 
         response = self._csrf_post(
-            client, {"caption": "expired jwt loses"},
+            client,
+            {"caption": "expired jwt loses"},
             HTTP_AUTHORIZATION=f"Bearer {expired}",
         )
 
@@ -150,9 +152,7 @@ class TestCSRFOnSessionUnsafeMethods:
     def test_session_patch_without_csrf_is_403(self):
         client, post_id = self._session_client_with_post()
 
-        response = client.patch(
-            f"{POSTS}{post_id}/", {"caption": "hijacked"}, format="json"
-        )
+        response = client.patch(f"{POSTS}{post_id}/", {"caption": "hijacked"}, format="json")
 
         assert response.status_code == 403
 
@@ -200,9 +200,7 @@ class TestAnonymousNoChallengeSurface:
     def test_anonymous_detail_patch_is_403_without_www_authenticate(self):
         client = APIClient()
 
-        response = client.patch(
-            f"{POSTS}{uuid.uuid4()}/", {"caption": "x"}, format="json"
-        )
+        response = client.patch(f"{POSTS}{uuid.uuid4()}/", {"caption": "x"}, format="json")
 
         assert response.status_code == 403
         assert "WWW-Authenticate" not in response.headers
@@ -234,9 +232,7 @@ class TestAnonymousNoChallengeSurface:
         client = APIClient()
         tokens = _login(APIClient(), "alice").json()
 
-        response = client.get(
-            POSTS, HTTP_AUTHORIZATION=f"Bearer {tokens['access'][:-4]}AAAA"
-        )
+        response = client.get(POSTS, HTTP_AUTHORIZATION=f"Bearer {tokens['access'][:-4]}AAAA")
 
         assert response.status_code == 403
         assert "WWW-Authenticate" not in response.headers
@@ -260,6 +256,7 @@ class TestRegressionSanity:
 
     def test_brand_titles_and_feed_only_footer(self):
         from django.test import Client as DjangoClient
+
         from apps.accounts.models import User
 
         browser = DjangoClient()
@@ -271,9 +268,7 @@ class TestRegressionSanity:
                 "password": "password123",
             },
         )
-        browser.post(
-            "/web/login/", {"username": "branduser", "password": "password123"}
-        )
+        browser.post("/web/login/", {"username": "branduser", "password": "password123"})
         user = User.objects.get(username="branduser")
 
         feed = browser.get(FEED_URL)
@@ -293,6 +288,7 @@ class TestRegressionSanity:
         shows a Profile link to their own profile. The twin tests only walk
         the feed; this attacks another authenticated page."""
         from django.test import Client as DjangoClient
+
         from apps.accounts.models import User
 
         browser = DjangoClient()
@@ -304,9 +300,7 @@ class TestRegressionSanity:
                 "password": "password123",
             },
         )
-        browser.post(
-            "/web/login/", {"username": "topbaruser", "password": "password123"}
-        )
+        browser.post("/web/login/", {"username": "topbaruser", "password": "password123"})
         user = User.objects.get(username="topbaruser")
 
         html = browser.get(f"/web/profile/{user.pk}/").content.decode()

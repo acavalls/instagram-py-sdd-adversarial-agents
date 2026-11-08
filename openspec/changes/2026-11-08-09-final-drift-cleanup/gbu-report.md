@@ -4,7 +4,7 @@
 
 Final drift cleanup: resolves the six low findings left by the cycle-8
 audit (C7-01..C7-03, C8-01..C8-03). Declaration-only — no production code
-changes. Suite: 543 passed, 2 skipped, coverage 99.16%.
+changes. Suite: 558 passed, 2 skipped, coverage 99.16%. Quality gates: ruff check + format clean (after orchestrator normalization of the Bad attack file), mypy 0 errors, manage.py check clean.
 
 ## Group results
 

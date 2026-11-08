@@ -9,9 +9,9 @@
     "bad_max_test_runner_executions": 6
   },
   "budget_usage": {
-    "bad_minutes_used": 0,
-    "bad_test_runs_used": 0,
-    "bad_iterations_used": 0
+    "bad_minutes_used": 11,
+    "bad_test_runs_used": 10,
+    "bad_iterations_used": 1
   },
   "groups": {
     "1": {
@@ -55,6 +55,7 @@
   },
   "log": [
     "2026-11-08: cycle 8 closed first (audit-cycle-8-findings.md, 0efbb92); cycle 9 initialized and planning committed",
-    "2026-11-08: group 1 APPROVED iter 1 (3 scenario tests + alias); group 2 docs/policy done; Bad SURVIVES iter 1 (15 attacks, 0 bugs, budget overrun 10/6 runs 11/6 min reported honestly); probe1 dev-DB user removed"
+    "2026-11-08: group 1 APPROVED iter 1 (3 scenario tests + alias); group 2 docs/policy done; Bad SURVIVES iter 1 (15 attacks, 0 bugs, budget overrun 10/6 runs 11/6 min reported honestly); probe1 dev-DB user removed",
+    "2026-11-08: verify REJECTED (ruff red on Bad file at HEAD) -> normalized, gates green (558 passed/99.16%), artifacts corrected"
   ]
 }
