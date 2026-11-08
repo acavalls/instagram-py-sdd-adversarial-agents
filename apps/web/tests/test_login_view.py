@@ -91,6 +91,15 @@ class TestWebLoginView:
         assert response.status_code == 302
         assert response["Location"] == FEED_URL
 
+    def test_authenticated_visitor_is_redirected_to_the_feed(self, client) -> None:
+        _register(client, "alice", "alice@example.com")
+        _login(client, "alice", "password123")
+
+        response = client.get(LOGIN_URL)
+
+        assert response.status_code == 302
+        assert response["Location"] == FEED_URL
+
     def test_login_page_rerender_keeps_submitted_username(self, client) -> None:
         response = _login(client, "alice", "wrong-password")
 

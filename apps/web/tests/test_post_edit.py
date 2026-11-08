@@ -85,7 +85,7 @@ class TestInlineEdit:
         assert post.caption == "kept caption"
         assert not Post.objects.filter(pk=unknown_id).exists()
 
-    def test_inline_edit_rejects_a_non_owner(self, client) -> None:
+    def test_web_edit_post_refuses_a_non_owner(self, client) -> None:
         owner = _register_and_login(client, "bob")
         post = _create_post(owner, caption="owner caption")
         _register_and_login(client, "alice")
@@ -119,6 +119,19 @@ class TestEditFragmentsUnknownPost:
 
 @pytest.mark.django_db
 class TestEditFormVisibility:
+    def test_web_edit_form_refuses_unknown_or_non_owner_posts(self, client) -> None:
+        owner = _register_and_login(client, "formowner")
+        post = _create_post(owner, caption="private caption")
+        _register_and_login(client, "formintruder")
+
+        unknown_response = client.get(f"/web/posts/{uuid.uuid4()}/edit/")
+        non_owner_response = client.get(_edit_url(post))
+
+        assert unknown_response.status_code == 404
+        assert non_owner_response.status_code == 404
+        assert b"private caption" not in non_owner_response.content
+        assert b"private caption" not in unknown_response.content
+
     def test_edit_form_get_for_a_non_owner_returns_404_without_leaking_the_caption(
         self, client
     ) -> None:

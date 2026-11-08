@@ -158,13 +158,19 @@ class TestPostListAPI:
         assert page_ids == expected_order
         assert len(set(page_ids)) == 5
 
-    def test_invalid_pagination_rejected(self) -> None:
+    def test_invalid_pagination_parameters_rejected(self) -> None:
         client = _auth_client()
 
-        response = client.get(POSTS_URL, {"limit": "banana"})
+        for params in (
+            {"limit": "banana"},
+            {"limit": "0"},
+            {"limit": "-1"},
+            {"offset": "-5"},
+        ):
+            response = client.get(POSTS_URL, params)
 
-        assert response.status_code == 400
-        assert response.json() == {"error": "Invalid pagination parameters"}
+            assert response.status_code == 400, params
+            assert response.json() == {"error": "Invalid pagination parameters"}
 
     def test_authentication_required(self) -> None:
         client = APIClient()

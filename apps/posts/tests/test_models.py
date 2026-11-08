@@ -1,6 +1,8 @@
 import uuid
+from pathlib import Path
 
 import pytest
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db.models import F, Value
@@ -476,3 +478,19 @@ class TestBulkPathsKeepTheMediaLimit:
 
         with pytest.raises(ValidationError, match=ERROR_MEDIA_POST_REQUIRED):
             orphan.save()
+
+
+class TestPostMediaStorage:
+    @pytest.mark.django_db
+    def test_media_stored_under_the_post_media_path(self) -> None:
+        post = _make_post(_make_user())
+
+        media = _media(post, order=0, name="stored.png")
+        media.save()
+
+        stored = PostMedia.objects.get(pk=media.pk)
+
+        assert stored.file.name.startswith("post_media/")
+        assert Path(stored.file.path).is_relative_to(Path(settings.MEDIA_ROOT) / "post_media")
+        assert stored.file.storage.exists(stored.file.name)
+        assert stored.file.url == f"{settings.MEDIA_URL}{stored.file.name}"

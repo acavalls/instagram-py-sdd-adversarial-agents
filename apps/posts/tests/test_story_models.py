@@ -91,6 +91,32 @@ class TestExpiredStoryIsNotActive:
         assert list(Story.objects.filter(owner=user).active()) == []
 
 
+class TestBulkPathsBypassSavePathExpiryInvariant:
+    """The 24-hour invariant is scoped to the save path: the raw queryset
+    writes (update(), bulk_create) store whatever expiry values they are
+    given (stories: "Story data model" — "Bulk paths bypass the save-path
+    expiry invariant")."""
+
+    @pytest.mark.django_db
+    def test_bulk_paths_bypass_the_save_path_expiry_invariant(self) -> None:
+        user = _make_user()
+        now = timezone.now()
+
+        queryset_update = _make_story(user)
+        Story.objects.filter(pk=queryset_update.pk).update(expires_at=now + timedelta(days=30))
+        updated = Story.objects.get(pk=queryset_update.pk)
+        assert updated.expires_at == now + timedelta(days=30)
+
+        bulk_created = Story(
+            owner=user,
+            created_at=now,
+            expires_at=now + timedelta(days=365),
+        )
+        Story.objects.bulk_create([bulk_created])
+        smuggled = Story.objects.get(pk=bulk_created.pk)
+        assert smuggled.expires_at - smuggled.created_at == timedelta(days=365)
+
+
 class TestStoryViewUniquePair:
     @pytest.mark.django_db
     def test_story_view_unique_pair_rejected(self) -> None:

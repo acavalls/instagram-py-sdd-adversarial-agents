@@ -119,6 +119,17 @@ class TestAdminConsole:
         assert follow in follow_results
         assert other_follow not in follow_results
 
+    def test_auth_groups_are_manageable(self, staff_client) -> None:
+        index = staff_client.get(ADMIN_INDEX_URL)
+
+        assert index.status_code == 200
+        listed = {
+            (app["app_label"], model["object_name"])
+            for app in index.context_data["available_apps"]
+            for model in app["models"]
+        }
+        assert ("auth", "Group") in listed
+
     def test_admin_set_passwords_are_hashed(self, staff_client, staff_user: User) -> None:
         target = _create_user(username="bob", email="bob@example.com")
         url = USER_CHANGE_PASSWORD_URL.format(pk=target.pk)

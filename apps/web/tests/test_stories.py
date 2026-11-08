@@ -72,6 +72,18 @@ class TestStoryCreation:
         assert LOGIN_URL in response["Location"]
         assert Story.objects.count() == 0
 
+    def test_non_htmx_creation_redirects_to_the_feed(self, client: Client) -> None:
+        alice = _register(client, "alice")
+        _login(client, "alice")
+
+        response = client.post(CREATE_URL)
+
+        assert response.status_code == 302
+        assert response["Location"] == FEED_URL
+        story = Story.objects.get(owner=alice)
+        assert "stories/" in story.image.name
+        story.image.delete(save=False)
+
 
 @pytest.mark.django_db
 class TestStoryViewTracking:
@@ -149,6 +161,28 @@ class TestStoryViewTracking:
         assert expired_response.status_code == 200
         assert "Story not found" in expired_response.content.decode()
         assert StoryView.objects.count() == 0
+
+    def test_malformed_story_identifier_responds_404(self, client: Client) -> None:
+        _register(client, "alice")
+        _login(client, "alice")
+
+        response = client.post("/web/stories/not-a-uuid/view/")
+
+        assert response.status_code == 404
+        assert StoryView.objects.count() == 0
+
+    def test_non_htmx_view_redirects_to_the_feed(self, client: Client) -> None:
+        bob = _register(client, "bob")
+        alice = _register(client, "alice")
+        FollowService().follow(follower=alice, following=bob)
+        story = _create_story(bob)
+        _login(client, "alice")
+
+        response = client.post(VIEW_URL.format(story_id=story.pk))
+
+        assert response.status_code == 302
+        assert response["Location"] == FEED_URL
+        assert StoryView.objects.filter(story=story, viewer=alice).count() == 1
 
 
 @pytest.mark.django_db

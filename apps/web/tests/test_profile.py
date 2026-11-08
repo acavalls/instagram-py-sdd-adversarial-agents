@@ -204,6 +204,49 @@ class TestProfileGridOverlay:
 
 
 @pytest.mark.django_db
+class TestNonHtmxProfileWindow:
+    def test_non_htmx_profile_request_with_a_page_parameter_renders_the_full_page(
+        self, client
+    ) -> None:
+        user = _register_and_login(client)
+        for number in range(1, 14):
+            _create_post(user, caption=f"caption {number:02d}")
+
+        response = client.get(f"{_profile_url(user)}?page=2")
+
+        assert response.status_code == 200
+        html = response.content.decode()
+        assert "<aside" in html
+        assert 'data-testid="sidebar"' in html
+        assert "caption 01" in html
+        assert "caption 12" not in html
+        assert "caption 13" not in html
+        assert 'data-testid="profile-end"' in html
+
+
+@pytest.mark.django_db
+class TestProfileGridCardAnatomy:
+    def test_grid_item_shows_the_post_card_anatomy(self, client) -> None:
+        user = _register_and_login(client)
+        _create_post(user, caption="anatomy post")
+
+        html = client.get(_profile_url(user)).content.decode()
+        start = html.index('data-testid="profile-grid-item"')
+        end = html.index('data-testid="profile-end"')
+        item = html[start:end]
+
+        assert 'data-testid="post-card"' in item
+        assert 'data-testid="post-avatar"' in item
+        assert 'data-testid="post-username"' in item
+        assert f'href="{_profile_url(user)}"' in item
+        assert "anatomy post" in item
+        assert 'data-testid="post-actions"' in item
+        assert 'data-testid="post-media"' in item
+        assert 'data-testid="post-edit-button"' in item
+        assert 'data-testid="post-delete-button"' in item
+
+
+@pytest.mark.django_db
 class TestWebEditCaptionLimit:
     def test_web_edit_caption_above_limit_keeps_post_unchanged_and_reports_error(
         self, client
