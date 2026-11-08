@@ -47,15 +47,31 @@ def random_caption() -> str:
     return random.choice(CAPTIONS)  # noqa: S311
 
 
+def _palette_color(seed: str) -> tuple[int, int, int]:
+    """The palette color the seed deterministically selects."""
+    digest = hashlib.sha256(seed.encode()).hexdigest()
+    return PALETTE[int(digest, 16) % len(PALETTE)]
+
+
 def generate_placeholder_image(seed: str, name: str = "placeholder.png") -> ContentFile:
     """A deterministic placeholder image file for the given seed.
 
     The seed selects a palette color through a stable hash, so the same
     seed always produces the same image bytes.
     """
-    digest = hashlib.sha256(seed.encode()).hexdigest()
-    color = PALETTE[int(digest, 16) % len(PALETTE)]
-    image = Image.new("RGB", (IMAGE_SIZE, IMAGE_SIZE), color)
+    image = Image.new("RGB", (IMAGE_SIZE, IMAGE_SIZE), _palette_color(seed))
     buffer = io.BytesIO()
     image.save(buffer, format="PNG")
+    return ContentFile(buffer.getvalue(), name=name)
+
+
+def generate_placeholder_story_image(seed: str, name: str = "placeholder.jpg") -> ContentFile:
+    """A deterministic placeholder JPEG for a story with the given seed.
+
+    Same palette/hash convention as the post placeholder, saved as JPEG
+    for the story media type.
+    """
+    image = Image.new("RGB", (IMAGE_SIZE, IMAGE_SIZE), _palette_color(seed))
+    buffer = io.BytesIO()
+    image.save(buffer, format="JPEG")
     return ContentFile(buffer.getvalue(), name=name)

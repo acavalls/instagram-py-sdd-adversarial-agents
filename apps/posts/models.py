@@ -1,20 +1,24 @@
 import threading
 import uuid
 from contextlib import contextmanager
+from datetime import timedelta
 from typing import ClassVar
 
 from django.conf import settings
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 CAPTION_MAX_LENGTH = 2200
 MEDIA_LIMIT = 10
+STORY_LIFETIME = timedelta(hours=24)
 
 ERROR_CAPTION_TOO_LONG = "Caption cannot exceed 2200 characters"
 ERROR_CAPTION_NOT_TEXT = "Caption must be plain text"
 ERROR_MEDIA_LIMIT_EXCEEDED = "A post cannot have more than 10 media files"
 ERROR_MEDIA_POST_REQUIRED = "Post media requires a post"
+ERROR_STORY_EXPIRY_MISMATCH = "Story expiry must be exactly created_at plus 24 hours"
 
 
 def validate_caption(value: object) -> None:
@@ -319,3 +323,92 @@ class PostMedia(models.Model):
             PostMedia._default_manager.filter(pk=self.pk).values_list("post_id", flat=True).first()
         )
         return stored_post_id != self.post_id
+
+
+class StoryQuerySet(models.QuerySet):
+    """QuerySet with the active-stories filter shared by every stories feature."""
+
+    def active(self) -> "StoryQuerySet":
+        """Stories whose expiration timestamp has not passed yet."""
+        return self.filter(expires_at__gt=timezone.now())
+
+
+class StoryManager(models.Manager.from_queryset(StoryQuerySet)):  # type: ignore[misc]
+    """Default manager with the active-stories filter."""
+
+
+class Story(models.Model):
+    """A user's ephemeral image story that expires 24 hours after creation."""
+
+    class MediaType(models.TextChoices):
+        IMAGE = "image", "Image"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="stories",
+        verbose_name="owner",
+    )
+    image = models.ImageField("image", upload_to="stories/%Y/%m/%d/")
+    media_type = models.CharField(
+        "media type", max_length=5, choices=MediaType.choices, default=MediaType.IMAGE
+    )
+    created_at = models.DateTimeField("created at", default=timezone.now, editable=False)
+    expires_at = models.DateTimeField("expires at")
+
+    objects: ClassVar[StoryManager] = StoryManager()
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        indexes = [models.Index(fields=["owner", "expires_at"])]
+
+    def __str__(self) -> str:
+        return f"{self.owner} story {self.pk}"
+
+    def save(self, *args, **kwargs):
+        """Enforce the 24-hour lifetime invariant on the storage path.
+
+        A story saved without an expiration timestamp gets exactly
+        `created_at + 24h`; an explicitly provided expiration that differs
+        is refused with the model's expiry validation error before anything
+        is stored.
+        """
+        expected = self.created_at + STORY_LIFETIME
+        if self.expires_at is None:
+            self.expires_at = expected
+        elif self.expires_at != expected:
+            raise ValidationError(ERROR_STORY_EXPIRY_MISMATCH)
+        super().save(*args, **kwargs)
+
+
+class StoryView(models.Model):
+    """A single view of a story by a user, recorded at most once per pair."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    story = models.ForeignKey(
+        Story,
+        on_delete=models.CASCADE,
+        related_name="views",
+        verbose_name="story",
+    )
+    viewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="story_views",
+        verbose_name="viewer",
+    )
+    viewed_at = models.DateTimeField("viewed at", auto_now_add=True)
+
+    class Meta:
+        ordering = ["-viewed_at", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["story", "viewer"],
+                name="unique_story_view_story_viewer",
+            )
+        ]
+        indexes = [models.Index(fields=["viewer"])]
+
+    def __str__(self) -> str:
+        return f"{self.story} viewed by {self.viewer}"
