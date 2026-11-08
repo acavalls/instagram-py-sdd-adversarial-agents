@@ -201,7 +201,10 @@ git-writing bash commands are denied), `good` has full write access.
     overruns are reported honestly in the report and the budget line.
   - Any budget exhausted before delivering evidence is reported as
     `BUDGET_EXHAUSTED` → STOP and ask the user (never treated as "code is
-    correct").
+    correct"). Exception: when the budget is exhausted before all groups
+    are attacked, the declared practice is to finish the remaining
+    verification as the orchestrator (full suite plus Ugly static checks)
+    and record the substitution honestly in the report and the state log.
 
 ### Orchestrator duties
 
