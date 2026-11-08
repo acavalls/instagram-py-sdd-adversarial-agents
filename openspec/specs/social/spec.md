@@ -105,12 +105,14 @@ panel SHALL show a "No suggestions right now." message.
 ### Requirement: User profile page
 The system SHALL show a profile page for every user at
 `/web/profile/<uuid>/` with their posts newest first, loaded through HTMX
-infinite scroll, and counters of posts, followers and following. An unknown
-identifier MUST respond 404. On their own profile the owner sees the edit and
-delete controls on their posts; on other profiles the visitor sees the follow
-button reflecting the current relationship. The sidebar (defined in the
-web-ui capability) SHALL link to the logged-in user's own profile page. A
-profile without posts SHALL show an empty grid message instead of grid items.
+infinite scroll, and counters of posts, followers and following. A non-HTMX
+request with a page parameter SHALL render the full page with the posts of
+that window. An unknown identifier MUST respond 404. On their own profile
+the owner sees the edit and delete controls on their posts; on other profiles
+the visitor sees the follow button reflecting the current relationship. The
+sidebar (defined in the web-ui capability) SHALL link to the logged-in
+user's own profile page. A profile without posts SHALL show an empty grid
+message instead of grid items.
 
 #### Scenario: Own profile shows stats and editable grid
 - **WHEN** a user visits their own profile page
@@ -135,6 +137,10 @@ profile without posts SHALL show an empty grid message instead of grid items.
 #### Scenario: Profile grid without posts shows an empty message
 - **WHEN** a user visits the profile page of a user with no posts
 - **THEN** the system shows the empty grid message "No posts yet." instead of grid items
+
+#### Scenario: Non-HTMX profile request with a page parameter renders the full page
+- **WHEN** a browser requests a profile page with a page parameter and no HTMX header
+- **THEN** the system renders the full page showing the posts of that page window
 
 ### Requirement: Following list
 A profile SHALL offer a modal listing the users that profile follows,

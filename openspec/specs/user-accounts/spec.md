@@ -17,9 +17,15 @@ including queryset bulk operations: a bulk write carrying a legal username
 MUST apply it, a bulk write carrying a username that violates the rule MUST
 be refused with the model's username validation error, and a bulk write
 carrying a non-literal username value (an expression or missing value with
-no text to validate) MUST be refused with the same error. Passwords MUST be
-compared and stored byte-exactly, without whitespace trimming or case
-folding.
+no text to validate) MUST be refused with the same error. A direct save()
+carrying an invalid username MUST refuse the write silently: no exception is
+raised to the caller and nothing is stored. Passwords MUST be hashed on
+every storage path: objects created or bulk-created with a raw password MUST
+end up storing only a hash that authenticates against that password, never
+the raw value. Passwords MUST be compared and stored byte-exactly, without
+whitespace trimming or case folding. Usernames MUST be rejected when they
+carry surrounding whitespace, on every registration path, without trimming.
+Email uniqueness MUST be byte-exact and case-sensitive.
 
 #### Scenario: User account persisted
 - **GIVEN** a user completes registration with valid data
@@ -44,6 +50,22 @@ folding.
 #### Scenario: Password comparison is byte-exact
 - **WHEN** credentials are checked for login or token issuance
 - **THEN** the system compares the submitted password byte-exactly, without trimming whitespace or folding case
+
+#### Scenario: Direct save refuses an invalid username silently
+- **WHEN** a user instance with a username that violates the username rule is saved directly
+- **THEN** the system refuses the write silently: no exception is raised to the caller and nothing is stored
+
+#### Scenario: Bulk paths store hashed passwords
+- **WHEN** users are created or bulk-created with a raw password
+- **THEN** the stored value is a hash that authenticates against that password, and the raw value is never stored
+
+#### Scenario: Padded usernames are rejected on every registration path
+- **WHEN** a registration attempt (web or API) uses a username with surrounding whitespace
+- **THEN** the system rejects the registration with the username validation error, without trimming the value
+
+#### Scenario: Email uniqueness is byte-exact
+- **WHEN** a registration attempt uses an email that differs from an existing user's email only by letter case
+- **THEN** the system accepts the registration, because email uniqueness is case-sensitive
 
 ### Requirement: User registration
 The system SHALL allow a visitor to register an account with username, email
@@ -79,7 +101,9 @@ The system SHALL allow a user to log in from the web UI with username and
 password. On success the system MUST create a session, redirect the user to
 the feed page and confirm with "Logged in successfully". On failure the
 system MUST show a single generic error ("Invalid credentials") without
-revealing whether the username or the password was wrong.
+revealing whether the username or the password was wrong. An
+already-authenticated visitor requesting the login page MUST be redirected
+to the feed.
 
 #### Scenario: Successful web login
 - **WHEN** a registered user submits the login form with correct username and password
@@ -88,6 +112,10 @@ revealing whether the username or the password was wrong.
 #### Scenario: Failed web login hides the cause
 - **WHEN** a user submits the login form with a wrong password (or an unknown username)
 - **THEN** the system re-renders the login page with the error "Invalid credentials" and does not reveal which field was wrong
+
+#### Scenario: Authenticated visitor is redirected to the feed
+- **WHEN** an already-authenticated user requests the login page
+- **THEN** the system redirects to the feed instead of rendering the login form again
 
 ### Requirement: Web session logout
 The system SHALL allow a logged-in user to log out from the web UI. Logging

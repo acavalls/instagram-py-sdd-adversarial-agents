@@ -41,8 +41,8 @@ validation-closed, with its Manual validation line.
 
 ## 5. Config wording and quality gates
 
-- [ ] 5.1 Reword the fixed-stack frontend line in `openspec/config.yaml` so gradients and Google Fonts are stated as targets (F-10)
-- [ ] 5.2 Run the full suite: `pytest` with coverage >= 80%, `ruff check` and `ruff format --check`, `mypy` — all green
+- [x] 5.1 Reword the fixed-stack frontend line in `openspec/config.yaml` so gradients and Google Fonts are stated as targets (F-10)
+- [x] 5.2 Run the full suite: `pytest` with coverage >= 80%, `ruff check` and `ruff format --check`, `mypy` — all green
 
 ## Workflow follow-up
 

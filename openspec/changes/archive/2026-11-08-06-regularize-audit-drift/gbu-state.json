@@ -1,7 +1,7 @@
 {
   "change": "2026-11-08-06-regularize-audit-drift",
-  "status": "APPLY_IN_PROGRESS",
-  "current_group": "5",
+  "status": "APPLY_DONE",
+  "current_group": "",
   "current_iteration": 1,
   "budget": {
     "good_ugly_max_iterations_per_group": 3,
@@ -10,9 +10,9 @@
     "bad_max_test_runner_executions": 6
   },
   "budget_usage": {
-    "bad_minutes_used": 0,
-    "bad_test_runs_used": 0,
-    "bad_iterations_used": 0
+    "bad_minutes_used": 7,
+    "bad_test_runs_used": 6,
+    "bad_iterations_used": 3
   },
   "groups": {
     "1": {

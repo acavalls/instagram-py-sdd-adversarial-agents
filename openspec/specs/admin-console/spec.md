@@ -10,10 +10,12 @@ and REST API contracts.
 
 ### Requirement: Django admin console
 The system SHALL expose the Django admin at `/admin/` for staff users to
-manage user accounts, posts, stories and follow relationships. Anonymous
-visitors and non-staff users MUST NOT reach the admin pages: the system MUST
-redirect them to the admin login. Passwords set or edited through the admin
-MUST be stored hashed, never as plain text.
+manage user accounts, posts, stories and follow relationships. The admin
+index SHALL additionally offer Django's built-in auth Group model, which
+Django registers automatically. Anonymous visitors and non-staff users MUST
+NOT reach the admin pages: the system MUST redirect them to the admin login.
+Passwords set or edited through the admin MUST be stored hashed, never as
+plain text.
 
 #### Scenario: Anonymous visitor redirected to admin login
 - **WHEN** an anonymous visitor requests `/admin/`
@@ -26,3 +28,7 @@ MUST be stored hashed, never as plain text.
 #### Scenario: Admin-set passwords are hashed
 - **WHEN** a staff user sets or changes a user's password through the admin
 - **THEN** the stored value is a hash and authenticates against the new password
+
+#### Scenario: Auth groups are manageable
+- **WHEN** a staff user opens the admin console
+- **THEN** the index also offers Django's built-in auth Group model for management
