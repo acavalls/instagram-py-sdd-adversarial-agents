@@ -20,6 +20,9 @@ This is a pure restyle: no form, validation, routing or behavior changes.
 - config: update the fixed-stack frontend line — the auth screens now
   implement the target styling (the rest of the UI keeps system fonts and
   its single story-ring gradient).
+- Rebrand the visible product name from "django_ig" to "Instagram":
+  page titles, the sidebar brand and footer copy, the auth logo wordmark
+  and the OpenAPI title/description (Sheriff's PAUSE-1 feedback).
 
 ## Capabilities
 
@@ -29,7 +32,8 @@ This is a pure restyle: no form, validation, routing or behavior changes.
 
 ### Modified Capabilities
 
-- `web-ui`: Auth layout (+1 scenario, restyled requirement text).
+- `web-ui`: Auth layout (+1 scenario, restyled requirement text) and a new
+  Brand naming requirement (+3 scenarios).
 
 ## Impact
 
@@ -45,3 +49,4 @@ This is a pure restyle: no form, validation, routing or behavior changes.
 | 2026-11-08 | Brand fonts: "Grand Hotel" for the logo (Instagram-clone convention) and "Inter" for body text, loaded from Google Fonts in the auth layout. |
 | 2026-11-08 | The brand gradient (Instagram-like purple/pink/orange) paints the auth page background; the cards stay light.                            |
 | 2026-11-08 | The rest of the app is NOT restyled in this change (system fonts stay) — the config target line is updated to say so.                    |
+| 2026-11-08 | The visible product name is "Instagram" everywhere (titles, sidebar, auth wordmark, OpenAPI title) — Sheriff's decision at PAUSE-1.        |

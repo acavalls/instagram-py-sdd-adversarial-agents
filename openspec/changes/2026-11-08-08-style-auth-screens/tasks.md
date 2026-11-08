@@ -13,6 +13,13 @@
 - [x] 2.1 Update `openspec/config.yaml`: the auth screens now implement the target styling (fonts + gradient shipped on auth pages); the rest of the UI keeps system fonts and the single story-ring gradient
 - [x] 2.2 Run the full gates: `pytest` (coverage >= 80%), `ruff check`, `ruff format --check`, `mypy`, `manage.py check`
 
+## 3. Brand naming (Sheriff's PAUSE-1 feedback)
+
+- [x] 3.1 Replace every visible "django_ig" with "Instagram": template titles (base, auth, feed, profile, register, following), sidebar label and footer copy, the CSS logo wordmark, SPECTACULAR title/description in settings; update the ~30 pinning tests; add scenario-named tests for the new brand-naming scenarios
+
+  - Manual validation: every page title ends with "· Instagram"; the auth
+    logo reads Instagram; the sidebar shows Instagram.
+
 ## Workflow follow-up
 
 - Archive after review; the delta merges into `openspec/specs/web-ui/spec.md`.

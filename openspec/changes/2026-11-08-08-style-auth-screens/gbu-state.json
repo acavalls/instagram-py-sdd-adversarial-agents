@@ -29,6 +29,24 @@
       "status": "DONE",
       "good_iterations": 1,
       "ugly_verdicts": []
+    },
+    "3": {
+      "status": "APPROVED",
+      "good_iterations": 2,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "REJECTED",
+          "deviations": [
+            "DEV-001 sidebar footer scope: footer only on feed, scenario promised any authenticated page"
+          ]
+        },
+        {
+          "iteration": 2,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
     }
   },
   "bad": {
@@ -55,6 +73,7 @@
   },
   "log": [
     "2026-11-08: cycle 8 initialized; planning committed; visual-only restyle of auth screens (Grand Hotel + Inter, brand gradient)",
-    "2026-11-08: group 1 APPROVED iter 1; group 2 (config+gates) done by orchestrator; Bad SURVIVES iter 1 with budget overrun (8/6 runs, 8/6 min, own fixture bugs \u2014 reported honestly per W-2 policy)"
+    "2026-11-08: group 1 APPROVED iter 1; group 2 (config+gates) done by orchestrator; Bad SURVIVES iter 1 with budget overrun (8/6 runs, 8/6 min, own fixture bugs \u2014 reported honestly per W-2 policy)",
+    "2026-11-08: PAUSE-1 feedback folded in: group 3 brand naming (django_ig -> Instagram in titles/sidebar/wordmark/OpenAPI). Ugly REJECTED iter 1 (DEV-001 footer scope) -> delta rescoped -> APPROVED iter 2. 539 passed, cov 99.16%. Bad budget exhausted (8/6) \u2014 rebrand verified via suite + Ugly static greps"
   ]
 }

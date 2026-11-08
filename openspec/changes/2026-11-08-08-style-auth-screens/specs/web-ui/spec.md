@@ -27,3 +27,24 @@ brand gradient painting the page background behind the light cards.
 #### Scenario: Auth screens use the brand visual style
 - **WHEN** a visitor opens the login or register page
 - **THEN** the page loads the brand fonts (a script display font and a body font) and the auth background carries the brand gradient
+
+## ADDED Requirements
+
+### Requirement: Brand naming
+The product name displayed to users SHALL be "Instagram": every page title
+ends with "· Instagram" (page titles default to "Instagram"), the sidebar
+of every authenticated page shows the brand name, the home feed's sidebar
+footer reads "© 2026 Instagram", the auth logo wordmark reads "Instagram"
+and the OpenAPI title is "Instagram API".
+
+#### Scenario: Page titles carry the brand
+- **WHEN** a visitor opens any page of the application
+- **THEN** the document title ends with "· Instagram" (or is exactly "Instagram" when no page-specific title is set)
+
+#### Scenario: Auth wordmark shows the brand
+- **WHEN** a visitor opens the login or register page
+- **THEN** the auth logo wordmark reads "Instagram"
+
+#### Scenario: Sidebar and footer show the brand
+- **WHEN** a logged-in user views an authenticated page
+- **THEN** the sidebar shows the brand name "Instagram", and on the home feed the sidebar footer reads "© 2026 Instagram"

@@ -6,7 +6,7 @@ Visual-only restyle of the auth screens (login + register): brand Google
 Fonts (Grand Hotel logo script + Inter body) and the brand gradient
 (purple/pink/orange) on the auth background, card polish. Zero behavior
 changes — all auth flows, templates structure and pinned tests untouched.
-Suite: 528 passed, 2 skipped, coverage 99.14%.
+Suite: 539 passed, 2 skipped, coverage 99.16% (after the PAUSE-1 brand-naming group).
 
 ## Group results
 
@@ -35,6 +35,16 @@ Suite: 528 passed, 2 skipped, coverage 99.14%.
   (set_password, migration marker) are unaffected.
 - Offline degradation: auth pages fall back to system fonts (declared in
   design.md).
+
+## PAUSE-1 addition: brand naming (group 3)
+
+Sheriff feedback folded in: the visible product name is now "Instagram"
+everywhere — page titles ("· Instagram"), sidebar label, feed sidebar
+footer ("© 2026 Instagram"), auth wordmark, OpenAPI title "Instagram API".
+Ugly REJECTED iter 1 (footer promised on any authenticated page but only
+the feed has one) -> delta rescoped honestly -> APPROVED iter 2. Bad
+budget was already exhausted; the rebrand was verified via the full suite
+and Ugly static greps (no stray "django_ig" outside negative assertions).
 
 ## Manual validation script
 
