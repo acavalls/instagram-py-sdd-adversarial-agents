@@ -97,7 +97,7 @@ body {
 }
 
 .auth-logo-brand::after {
-    content: "django_ig";
+    content: "Instagram";
     font-family: "Grand Hotel", cursive;
     font-size: 2.5rem;
     line-height: 1;
