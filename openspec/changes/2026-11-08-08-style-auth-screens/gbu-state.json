@@ -9,9 +9,9 @@
     "bad_max_test_runner_executions": 6
   },
   "budget_usage": {
-    "bad_minutes_used": 0,
-    "bad_test_runs_used": 0,
-    "bad_iterations_used": 0
+    "bad_minutes_used": 8,
+    "bad_test_runs_used": 8,
+    "bad_iterations_used": 1
   },
   "groups": {
     "1": {

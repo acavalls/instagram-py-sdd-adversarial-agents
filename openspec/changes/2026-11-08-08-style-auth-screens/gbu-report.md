@@ -51,7 +51,7 @@ and Ugly static greps (no stray "django_ig" outside negative assertions).
 Run the dev server and verify:
 
 1. Open `/web/login/` — brand gradient background (purple→pink→orange),
-   script-font "django_ig" logo, polished card; log in with bob → feed.
+   script-font "Instagram" logo, polished card; log in with bob → feed.
 2. Open `/web/register/` — same styled layout; register a user →
    redirected to login.
 3. Log in with a wrong password → "Invalid credentials" on the restyled
