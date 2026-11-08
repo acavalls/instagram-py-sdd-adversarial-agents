@@ -5,7 +5,7 @@ import pytest
 LOGIN_URL = "/web/login/"
 FEED_URL = "/web/feed/"
 REGISTER_URL = "/web/register/"
-PLACEHOLDER_ENTRIES = ("Search", "Explore", "Messages", "Notifications", "Create", "Profile")
+PLACEHOLDER_ENTRIES = ("Search", "Explore", "Messages", "Notifications", "Profile")
 
 
 def _register_and_login(client, username: str = "alice") -> None:
@@ -95,10 +95,12 @@ class TestSidebarShell:
             "nav-explore",
             "nav-messages",
             "nav-notifications",
-            "nav-create",
             "nav-profile",
         ):
             assert "active" not in _tag(html, testid)
+        create_form = re.search(r"<form [^>]*data-testid=\"nav-create\"[^>]*>", html)
+        assert create_form, "create form not found"
+        assert "active" not in create_form.group(0)
 
     def test_icon_font_is_loaded(self, client) -> None:
         _register_and_login(client)

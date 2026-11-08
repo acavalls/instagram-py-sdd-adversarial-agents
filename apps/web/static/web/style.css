@@ -242,3 +242,241 @@ body {
         padding-bottom: 5rem;
     }
 }
+
+/* Sidebar Create entry (form-based navigation) */
+.sidebar-create button {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.6rem;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: #262626;
+    font-size: 1rem;
+    cursor: pointer;
+    text-align: left;
+}
+
+.sidebar-create button:hover {
+    background: var(--ig-bg);
+}
+
+.sidebar-create button i {
+    font-size: 1.4rem;
+}
+
+/* Feed */
+.feed {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    max-width: 470px;
+    margin: 0 auto;
+}
+
+.feed-sentinel {
+    display: flex;
+    justify-content: center;
+    padding: 1rem;
+    color: #8e8e8e;
+    font-size: 1.4rem;
+}
+
+.feed-end {
+    color: #8e8e8e;
+    font-size: 0.9rem;
+}
+
+/* Post card */
+.post-card {
+    background: var(--ig-card);
+    border: 1px solid var(--ig-border);
+    border-radius: 8px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.post-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.8rem;
+}
+
+.post-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--ig-accent);
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.post-username {
+    font-weight: 700;
+    color: #262626;
+    text-decoration: none;
+}
+
+.post-card-menu {
+    margin-left: auto;
+    position: relative;
+}
+
+.post-card-menu summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 0.25rem;
+}
+
+.post-card-menu summary::-webkit-details-marker {
+    display: none;
+}
+
+.post-card-menu-items {
+    position: absolute;
+    right: 0;
+    background: var(--ig-card);
+    border: 1px solid var(--ig-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    min-width: 120px;
+    z-index: 10;
+}
+
+.post-menu-item {
+    padding: 0.5rem 0.8rem;
+    border: none;
+    background: none;
+    color: #262626;
+    font-size: 0.9rem;
+    text-align: left;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    width: 100%;
+}
+
+.post-menu-item:hover {
+    background: var(--ig-bg);
+}
+
+.post-menu-item--danger {
+    color: #ed4956;
+}
+
+.post-card-media {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1 / 1;
+    background: var(--ig-bg);
+}
+
+.post-card-media-file {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.post-media-placeholder {
+    font-size: 4rem;
+    color: #c7c7c7;
+}
+
+.post-card-actions {
+    display: flex;
+    gap: 0.9rem;
+    padding: 0.6rem 0.8rem 0;
+}
+
+.post-action {
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: 1.4rem;
+    color: #262626;
+    cursor: default;
+}
+
+.post-action-save {
+    margin-left: auto;
+}
+
+.post-card-content {
+    padding: 0.5rem 0.8rem 0.8rem;
+}
+
+.post-caption {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.post-caption-owner {
+    margin-right: 0.35rem;
+}
+
+.post-timestamp {
+    margin: 0.35rem 0 0;
+    color: #8e8e8e;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+}
+
+/* Inline edit form */
+.post-edit-form {
+    background: var(--ig-card);
+    border: 1px solid var(--ig-border);
+    border-radius: 8px;
+    padding: 0.8rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.post-edit-input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--ig-border);
+    border-radius: 4px;
+    padding: 0.5rem;
+    font-family: inherit;
+    font-size: 0.95rem;
+    resize: vertical;
+}
+
+.post-edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+}
+
+.post-edit-submit,
+.post-edit-cancel {
+    border: none;
+    border-radius: 4px;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.post-edit-submit {
+    background: var(--ig-accent);
+    color: #fff;
+}
+
+.post-edit-cancel {
+    background: none;
+    color: #262626;
+}

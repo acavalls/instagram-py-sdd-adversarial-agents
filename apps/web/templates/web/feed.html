@@ -1,9 +1,7 @@
 {% extends "web/base.html" %}
 {% block title %}Feed · django_ig{% endblock %}
 {% block content %}
-<section class="feed-empty" data-placeholder="feed-empty">
-    <i class="bi bi-collection" aria-hidden="true"></i>
-    <p class="feed-empty-title">Your feed is empty</p>
-    <p class="feed-empty-text">Posts from people you follow will appear here.</p>
+<section class="feed" data-testid="feed">
+    {% include "web/partials/post_cards.html" %}
 </section>
 {% endblock %}

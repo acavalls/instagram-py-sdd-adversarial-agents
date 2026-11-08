@@ -23,6 +23,17 @@ class TestOpenAPIDocumentation:
             "application/json"
         ]["schema"]["$ref"]
         assert register_request.endswith("/UserCreate")
+        # The posts surface is part of the contract now (MODIFIED delta).
+        assert "get" in paths["/api/posts/"]
+        assert "post" in paths["/api/posts/"]
+        posts_detail = paths["/api/posts/{post_id}/"]
+        assert "get" in posts_detail
+        assert "patch" in posts_detail
+        assert "delete" in posts_detail
+        posts_request = paths["/api/posts/"]["post"]["requestBody"]["content"][
+            "multipart/form-data"
+        ]["schema"]["$ref"]
+        assert posts_request.endswith("/PostWrite")
 
     def test_docs_ui_renders(self) -> None:
         client = APIClient()

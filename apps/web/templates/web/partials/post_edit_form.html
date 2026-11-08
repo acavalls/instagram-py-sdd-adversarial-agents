@@ -1,0 +1,16 @@
+<form class="post-edit-form" method="post" action="{% url 'web:post_edit' post.id %}"
+      data-testid="post-edit-form"
+      hx-post="{% url 'web:post_edit' post.id %}" hx-target="this" hx-swap="outerHTML">
+    {% csrf_token %}
+    {% if error %}
+    <p class="form-errors" data-testid="post-edit-error">{{ error }}</p>
+    {% endif %}
+    <textarea class="post-edit-input" name="caption" rows="3" maxlength="2200"
+              data-testid="post-edit-input" aria-label="Caption">{{ post.caption }}</textarea>
+    <div class="post-edit-actions">
+        <button type="submit" class="post-edit-submit" data-testid="post-edit-submit">Save</button>
+        <button type="button" class="post-edit-cancel" data-testid="post-edit-cancel"
+                hx-get="{% url 'web:post_card' post.id %}"
+                hx-target="closest form" hx-swap="outerHTML">Cancel</button>
+    </div>
+</form>

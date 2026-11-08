@@ -1,0 +1,18 @@
+{% for post in posts %}
+    {% include "web/partials/post_card.html" %}
+{% empty %}
+    <section class="feed-empty" data-testid="feed-empty">
+        <i class="bi bi-collection" aria-hidden="true"></i>
+        <p class="feed-empty-title">No posts yet</p>
+        <p class="feed-empty-text">Create your first post with the Create button in the sidebar.</p>
+    </section>
+{% endfor %}
+{% if has_next %}
+    <div class="feed-sentinel" data-testid="feed-sentinel"
+         hx-get="{% url 'web:feed' %}?page={{ page|add:1 }}"
+         hx-trigger="revealed" hx-swap="outerHTML">
+        <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+    </div>
+{% else %}
+    <p class="feed-end" data-testid="feed-end">You're all caught up</p>
+{% endif %}
