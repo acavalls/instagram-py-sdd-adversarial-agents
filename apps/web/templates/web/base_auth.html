@@ -1,0 +1,17 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}django_ig{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'web/style.css' %}">
+</head>
+<body class="auth-page">
+    {% include "web/partials/messages.html" %}
+    <main class="{% block auth_wrapper_class %}auth-wrapper{% endblock %}">
+        {% block auth_content %}{% endblock %}
+    </main>
+</body>
+</html>

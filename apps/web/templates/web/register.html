@@ -1,0 +1,36 @@
+{% extends "web/base_auth.html" %}
+{% block title %}Create account · django_ig{% endblock %}
+{% block auth_wrapper_class %}auth-wrapper auth-wrapper-wide{% endblock %}
+{% block auth_content %}
+<div class="auth-columns">
+<section class="auth-card">
+    {% include "web/partials/auth_logo.html" %}
+    <h1>Create account</h1>
+    {% if errors %}
+    <ul class="form-errors">
+        {% for error in errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    <form method="post" action="{% url 'web:register' %}">
+        {% csrf_token %}
+        <label for="id_username">Username</label>
+        <input id="id_username" name="username" type="text" value="{{ username|default:'' }}" required
+            maxlength="150" autocomplete="username">
+        <label for="id_email">Email</label>
+        <input id="id_email" name="email" type="email" value="{{ email|default:'' }}" required
+            autocomplete="email">
+        <label for="id_password">Password</label>
+        <input id="id_password" name="password" type="password" required autocomplete="new-password">
+        <button type="submit">Register</button>
+    </form>
+</section>
+<section class="auth-card auth-card-secondary">
+    <p>Already have an account? <a href="{% url 'web:login' %}">Login</a></p>
+</section>
+</div>
+<footer class="auth-footer">
+    <p><a href="{% url 'web:login' %}">Login</a></p>
+</footer>
+{% endblock %}

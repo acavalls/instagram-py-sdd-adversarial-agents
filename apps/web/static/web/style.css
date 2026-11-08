@@ -1,0 +1,244 @@
+:root {
+    --ig-bg: #fafafa;
+    --ig-card: #ffffff;
+    --ig-border: #dbdbdb;
+    --ig-accent: #405de6;
+}
+
+body {
+    margin: 0;
+    background: var(--ig-bg);
+    font-family: system-ui, sans-serif;
+    color: #262626;
+}
+
+.auth-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.auth-wrapper {
+    width: 100%;
+    max-width: 380px;
+    padding: 1rem;
+}
+
+.auth-card {
+    background: var(--ig-card);
+    border: 1px solid var(--ig-border);
+    border-radius: 8px;
+    padding: 2rem;
+    text-align: center;
+}
+
+.auth-logo i {
+    font-size: 3rem;
+}
+
+.auth-logo {
+    margin-bottom: 0.75rem;
+}
+
+.auth-wrapper-wide {
+    max-width: 760px;
+}
+
+.auth-columns {
+    display: flex;
+    gap: 1rem;
+    align-items: stretch;
+}
+
+.auth-columns .auth-card {
+    flex: 1;
+}
+
+.auth-card-secondary {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.auth-footer {
+    margin-top: 1rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #8e8e8e;
+}
+
+.form-errors {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0.5rem;
+    border: 1px solid #ed4956;
+    border-radius: 4px;
+    color: #ed4956;
+    font-size: 0.9rem;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 240px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.5rem 1rem;
+    background: var(--ig-card);
+    border-right: 1px solid var(--ig-border);
+    box-sizing: border-box;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.sidebar-logo,
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #262626;
+    font-size: 1rem;
+}
+
+.sidebar-logo {
+    font-weight: 700;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+}
+
+.sidebar-link i,
+.sidebar-logo i {
+    font-size: 1.4rem;
+}
+
+.sidebar-link:hover {
+    background: var(--ig-bg);
+}
+
+.sidebar-link.active {
+    font-weight: 700;
+    color: var(--ig-accent);
+}
+
+.sidebar-link--placeholder {
+    color: #8e8e8e;
+    cursor: default;
+}
+
+.sidebar-link--placeholder:hover {
+    background: none;
+}
+
+.sidebar-logout button {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.6rem;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: #262626;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.sidebar-logout button:hover {
+    background: var(--ig-bg);
+}
+
+.app-main {
+    margin-left: 240px;
+    padding: 2rem;
+}
+
+.feed-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 50vh;
+    text-align: center;
+    color: #8e8e8e;
+}
+
+.feed-empty i {
+    font-size: 3rem;
+}
+
+.feed-empty-title {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #262626;
+}
+
+.feed-empty-text {
+    margin: 0;
+}
+
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 72px;
+        padding: 1.5rem 0.5rem;
+    }
+
+    .sidebar-label {
+        display: none;
+    }
+
+    .sidebar-logo,
+    .sidebar-link {
+        justify-content: center;
+    }
+
+    .app-main {
+        margin-left: 72px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        top: auto;
+        right: 0;
+        width: 100%;
+        height: 56px;
+        flex-direction: row;
+        align-items: center;
+        padding: 0 0.5rem;
+        border-right: none;
+        border-top: 1px solid var(--ig-border);
+    }
+
+    .sidebar-nav {
+        flex-direction: row;
+        justify-content: space-around;
+        flex: 1;
+    }
+
+    .sidebar-logo {
+        display: none;
+    }
+
+    .sidebar-logout button {
+        width: auto;
+        padding: 0.5rem;
+    }
+
+    .app-main {
+        margin-left: 0;
+        padding-bottom: 5rem;
+    }
+}

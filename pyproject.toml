@@ -5,6 +5,7 @@ addopts = "--cov=apps --cov-report=term-missing"
 
 [tool.coverage.run]
 source = ["apps"]
+omit = ["*/migrations/*"]
 
 [tool.coverage.report]
 fail_under = 80
