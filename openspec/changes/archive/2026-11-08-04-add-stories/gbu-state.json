@@ -39,7 +39,7 @@
     },
     "3": {
       "status": "APPROVED",
-      "good_iterations": 1,
+      "good_iterations": 2,
       "ugly_verdicts": [
         {
           "iteration": 1,
@@ -92,6 +92,7 @@
     "2026-11-08: group 3 APPROVED iter 1 (393 passed, cov 98.97%)",
     "2026-11-08: group 4 APPROVED iter 1 (398 passed, cov 98.99%)",
     "2026-11-08: group 5 gates green (423 passed, 2 skipped, 1 xfailed, cov 99.02%)",
-    "2026-11-08: Bad SURVIVES iteration 1 (25 attack tests, 0 bugs; budget 7/6 runs \u2014 over by 1, two self-fixture inspection runs, reported honestly)"
+    "2026-11-08: Bad SURVIVES iteration 1 (25 attack tests, 0 bugs; budget 7/6 runs \u2014 over by 1, two self-fixture inspection runs, reported honestly)",
+    "2026-11-08: Sheriff manual-validation fix \u2014 multi-line {# #} comment leaked into the rendered bar; converted to {% comment %}, regression tests added, gates green (425 passed, cov 99.03%), committed d90d561"
   ]
 }
