@@ -1,0 +1,42 @@
+{
+  "change": "2026-11-08-01-bootstrap-accounts-shell",
+  "status": "APPLY_DONE",
+  "current_group": null,
+  "current_iteration": 0,
+  "budget": {
+    "good_ugly_max_iterations_per_group": 3,
+    "bad_max_attack_iterations": 2,
+    "bad_max_wall_clock_minutes": 6,
+    "bad_max_test_runner_executions": 6
+  },
+  "budget_usage": {
+    "bad_minutes_used": 6,
+    "bad_test_runs_used": 6,
+    "bad_iterations_used": 1,
+    "note": "cycle 1 consumed 6min/6runs; cycle 2 (post-fix re-attack) is the final allowed iteration with a fresh 6min/6runs allowance"
+  },
+  "groups": {
+    "1": {"status": "APPROVED", "good_iterations": 1, "ugly_verdicts": ["APPROVED:1"]},
+    "2": {"status": "APPROVED", "good_iterations": 1, "ugly_verdicts": ["APPROVED:1"]},
+    "3": {"status": "APPROVED", "good_iterations": 1, "ugly_verdicts": ["APPROVED:1"]},
+    "4": {"status": "APPROVED", "good_iterations": 2, "ugly_verdicts": ["REJECTED:1", "APPROVED:2"]},
+    "5": {"status": "APPROVED", "good_iterations": 1, "ugly_verdicts": ["APPROVED:1"]},
+    "6": {"status": "APPROVED", "good_iterations": 0, "ugly_verdicts": ["GATES_GREEN"]},
+  },
+  "bad": {
+    "status": "SURVIVES",
+    "verdicts": [
+      "cycle1: BROKEN (BUG-001, BUG-002, BUG-003; 6min/6runs)",
+      "cycle2: SURVIVES (no blocking bugs; 5 MEDIUM observations; 5min/6runs)"
+    ]
+  },
+  "log": [
+    "2026-11-08: state initialized; planning committed (4792259/d704f7e/0c83ff9) and pushed",
+    "2026-11-08: groups 1-3 Good iter.1 -> Ugly APPROVED",
+    "2026-11-08: group 4 Good iter.1 -> Ugly REJECTED (DEV-001/002 auth card) -> Good iter.2 -> Ugly APPROVED",
+    "2026-11-08: group 5 Good iter.1 -> Ugly APPROVED",
+    "2026-11-08: group 6 gates green (74 passed, cov 98.29%)",
+    "2026-11-08: Bad cycle1 BROKEN (BUG-001 save() bypass, BUG-002 feed toast, BUG-003 API password trim) -> Good fixed all 3 -> Bad cycle2 SURVIVES (5 MEDIUM observations)",
+    "2026-11-08: final gates green (111 passed, 1 xfailed, cov 99.17%, ruff 0, mypy 0)"
+  ]
+}
