@@ -140,13 +140,15 @@ media file. The tabs SHALL be presentational placeholders except POSTS.
 
 ### Requirement: Brand naming
 The product name displayed to users SHALL be "Instagram": every page title
-ends with "· Instagram" (page titles default to "Instagram"), the sidebar
-of every authenticated page shows the brand name, the home feed's sidebar
-footer reads "© 2026 Instagram", the auth logo wordmark reads "Instagram"
-and the OpenAPI title is "Instagram API".
+of the web UI ends with "· Instagram" (page titles default to "Instagram";
+the API documentation and admin console are separate surfaces with their
+own titles), the sidebar of every authenticated page shows the brand name,
+the sidebar footer reads "© 2026 Instagram" and appears only on the home
+feed, the auth logo wordmark reads "Instagram" and the OpenAPI title is
+"Instagram API".
 
 #### Scenario: Page titles carry the brand
-- **WHEN** a visitor opens any page of the application
+- **WHEN** a visitor opens any page of the web UI
 - **THEN** the document title ends with "· Instagram" (or is exactly "Instagram" when no page-specific title is set)
 
 #### Scenario: Auth wordmark shows the brand
@@ -155,4 +157,4 @@ and the OpenAPI title is "Instagram API".
 
 #### Scenario: Sidebar and footer show the brand
 - **WHEN** a logged-in user views an authenticated page
-- **THEN** the sidebar shows the brand name "Instagram", and on the home feed the sidebar footer reads "© 2026 Instagram"
+- **THEN** the sidebar shows the brand name "Instagram", and on the home feed — and only there — the sidebar footer reads "© 2026 Instagram"
