@@ -1,0 +1,38 @@
+<aside class="home-sidebar" data-testid="home-sidebar">
+    <div class="sidebar-current-user" data-testid="sidebar-current-user">
+        <a class="sidebar-current-user-avatar" href="{% url 'web:profile' user.pk %}"
+           data-testid="current-user-avatar" aria-hidden="true">{{ user.username|first|upper }}</a>
+        <a class="sidebar-current-user-username" href="{% url 'web:profile' user.pk %}"
+           data-testid="current-user-username">{{ user.username }}</a>
+    </div>
+    <section class="suggestions" data-testid="suggestions">
+        <h2 class="suggestions-title" data-testid="suggestions-title">Suggested for you</h2>
+        {% if suggestions %}
+        <ul class="suggestions-list">
+            {% for suggestion in suggestions %}
+            <li class="suggestion-row" data-testid="suggestion-row">
+                <a class="suggestion-avatar" href="{% url 'web:profile' suggestion.pk %}"
+                   data-testid="suggestion-avatar" aria-hidden="true">{{ suggestion.username|first|upper }}</a>
+                <a class="suggestion-username" href="{% url 'web:profile' suggestion.pk %}"
+                   data-testid="suggestion-username">{{ suggestion.username }}</a>
+                <span class="suggestion-reason" data-testid="suggestion-reason">New to Instagram</span>
+                {% include "web/partials/follow_button.html" with target_user=suggestion is_following=False %}
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="suggestions-empty" data-testid="suggestions-empty">No suggestions right now.</p>
+        {% endif %}
+    </section>
+    <footer class="sidebar-footer" data-testid="sidebar-footer">
+        <nav class="sidebar-footer-links" data-testid="sidebar-footer-links">
+            <a class="sidebar-footer-link" href="#" data-testid="footer-about">About</a>
+            <a class="sidebar-footer-link" href="#" data-testid="footer-help">Help</a>
+            <a class="sidebar-footer-link" href="#" data-testid="footer-api">API</a>
+            <a class="sidebar-footer-link" href="#" data-testid="footer-jobs">Jobs</a>
+            <a class="sidebar-footer-link" href="#" data-testid="footer-privacy">Privacy</a>
+            <a class="sidebar-footer-link" href="#" data-testid="footer-terms">Terms</a>
+        </nav>
+        <p class="sidebar-footer-copy" data-testid="sidebar-footer-copy">&copy; 2026 django_ig</p>
+    </footer>
+</aside>

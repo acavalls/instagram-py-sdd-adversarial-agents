@@ -1,0 +1,18 @@
+{% for post in posts %}
+<div class="profile-grid-item" data-testid="profile-grid-item">
+    <div class="profile-grid-overlay" data-testid="grid-item-overlay" aria-hidden="true">
+        <i class="bi bi-heart"></i>
+        <i class="bi bi-chat"></i>
+    </div>
+    {% include "web/partials/post_card.html" %}
+</div>
+{% endfor %}
+{% if has_next %}
+<div class="feed-sentinel" data-testid="profile-sentinel"
+     hx-get="{% url 'web:profile' profile_user.pk %}?page={{ page|add:1 }}"
+     hx-trigger="revealed" hx-swap="outerHTML">
+    <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+</div>
+{% else %}
+<p class="feed-end" data-testid="profile-end">You're all caught up</p>
+{% endif %}

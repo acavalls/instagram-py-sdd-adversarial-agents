@@ -480,3 +480,347 @@ body {
     background: none;
     color: #262626;
 }
+
+/* Profile */
+.profile {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    padding: 1rem 0 2rem;
+}
+
+.profile-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: var(--ig-accent);
+    color: #fff;
+    font-size: 2.4rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.profile-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.profile-username {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 400;
+}
+
+.profile-follow-button {
+    border: 1px solid var(--ig-border);
+    border-radius: 4px;
+    padding: 0.3rem 1.2rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    background: var(--ig-accent);
+    color: #fff;
+    cursor: pointer;
+}
+
+.profile-stats {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.profile-stat {
+    font-size: 1rem;
+}
+
+.profile-stat-value {
+    font-weight: 700;
+}
+
+.profile-stat-link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.profile-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    border-top: 1px solid var(--ig-border);
+    padding: 0.8rem 0;
+}
+
+.profile-tab {
+    color: #8e8e8e;
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.profile-tab--active {
+    color: #262626;
+    border-top: 1px solid #262626;
+    margin-top: -0.85rem;
+    padding-top: 0.75rem;
+}
+
+.profile-tab--placeholder {
+    cursor: default;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+}
+
+.profile-grid-item {
+    position: relative;
+}
+
+.profile-grid-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+    background: rgba(0, 0, 0, 0.45);
+    color: #fff;
+    font-size: 1.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+    z-index: 1;
+}
+
+.profile-grid-item:hover .profile-grid-overlay {
+    opacity: 1;
+}
+
+.profile-empty {
+    display: flex;
+    justify-content: center;
+    padding: 3rem 0;
+    color: #8e8e8e;
+    font-size: 1.1rem;
+}
+
+/* Home layout: feed grid plus the right-hand suggestions sidebar */
+.home-layout {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 4rem;
+}
+
+.home-layout .feed {
+    flex: 1 1 auto;
+}
+
+.home-sidebar {
+    flex: 0 0 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-top: 1rem;
+}
+
+.sidebar-current-user {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sidebar-current-user-avatar,
+.suggestion-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--ig-border);
+    color: #262626;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.sidebar-current-user-username,
+.suggestion-username {
+    color: #262626;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.suggestions-title {
+    margin: 0 0 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #8e8e8e;
+}
+
+.suggestions-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.suggestion-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.suggestion-reason {
+    flex: 1 1 auto;
+    color: #8e8e8e;
+    font-size: 0.85rem;
+}
+
+.suggestions-empty {
+    margin: 0;
+    color: #8e8e8e;
+    font-size: 0.9rem;
+}
+
+.sidebar-footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+}
+
+.sidebar-footer-link {
+    color: #8e8e8e;
+    font-size: 0.8rem;
+    text-decoration: none;
+}
+
+.sidebar-footer-copy {
+    margin: 0.5rem 0 0;
+    color: #8e8e8e;
+    font-size: 0.8rem;
+}
+
+/* Following-list modal: overlay backdrop with a centered dialog */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 100;
+}
+
+.modal {
+    width: min(400px, 90vw);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border-bottom: 1px solid var(--ig-border);
+    padding: 0.75rem 1rem;
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.modal-close {
+    position: absolute;
+    right: 1rem;
+    color: #262626;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.following-search {
+    border-bottom: 1px solid var(--ig-border);
+    padding: 0.5rem 1rem;
+}
+
+.following-search-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid var(--ig-border);
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.following-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.5rem 0;
+    overflow-y: auto;
+}
+
+.following-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+}
+
+.following-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--ig-border);
+    color: #262626;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.following-username {
+    color: #262626;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.following-empty {
+    padding: 1rem;
+    color: #8e8e8e;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+@media (max-width: 1024px) {
+    .home-layout {
+        flex-direction: column;
+    }
+
+    .home-sidebar {
+        flex: 0 1 auto;
+        width: 100%;
+        max-width: 470px;
+    }
+}

@@ -21,6 +21,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "apps.accounts",
     "apps.posts",
+    "apps.social",
     "apps.web",
 ]
 

@@ -5,7 +5,7 @@ import pytest
 LOGIN_URL = "/web/login/"
 FEED_URL = "/web/feed/"
 REGISTER_URL = "/web/register/"
-PLACEHOLDER_ENTRIES = ("Search", "Explore", "Messages", "Notifications", "Profile")
+PLACEHOLDER_ENTRIES = ("Search", "Explore", "Messages", "Notifications")
 
 
 def _register_and_login(client, username: str = "alice") -> None:

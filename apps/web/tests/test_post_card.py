@@ -5,6 +5,7 @@ from apps.accounts.models import User
 from apps.posts.models import Post
 from apps.posts.services import PostMediaInput, PostService
 from apps.posts.use_cases import CreatePostInput, CreatePostUseCase
+from apps.social.services import FollowService
 
 LOGIN_URL = "/web/login/"
 REGISTER_URL = "/web/register/"
@@ -36,22 +37,28 @@ def _create_post(
     return output.post
 
 
+def _feed_with_followed_post(client) -> User:
+    author = _register_and_login(client, "bob")
+    _create_post(author)
+    viewer = _register_and_login(client)
+    FollowService().follow(follower=viewer, following=author)
+    return viewer
+
+
 @pytest.mark.django_db
 class TestPostCardAnatomy:
     def test_card_header_shows_owner_avatar_and_username_link(self, client) -> None:
-        user = _register_and_login(client)
-        _create_post(user)
+        _feed_with_followed_post(client)
 
         html = client.get(FEED_URL).content.decode()
 
         assert 'data-testid="post-avatar"' in html
-        assert 'href="/web/users/alice/"' in html
+        assert 'href="/web/users/bob/"' in html
         assert 'data-testid="post-username"' in html
-        assert ">alice</a>" in html
+        assert ">bob</a>" in html
 
     def test_card_actions_row_renders_placeholders(self, client) -> None:
-        user = _register_and_login(client)
-        _create_post(user)
+        _feed_with_followed_post(client)
 
         html = client.get(FEED_URL).content.decode()
 
@@ -74,8 +81,10 @@ class TestPostCardAnatomy:
             assert "action=" not in tag
 
     def test_missing_media_renders_the_placeholder_icon(self, client) -> None:
-        user = _register_and_login(client)
-        _create_post(user, media_types=())
+        author = _register_and_login(client, "bob")
+        _create_post(author, media_types=())
+        viewer = _register_and_login(client)
+        FollowService().follow(follower=viewer, following=author)
 
         html = client.get(FEED_URL).content.decode()
 
@@ -83,8 +92,10 @@ class TestPostCardAnatomy:
         assert 'data-testid="post-media-image"' not in html
 
     def test_multiple_media_renders_the_first_file_only(self, client) -> None:
-        user = _register_and_login(client)
-        _create_post(user, media_types=("image", "image"))
+        author = _register_and_login(client, "bob")
+        _create_post(author, media_types=("image", "image"))
+        viewer = _register_and_login(client)
+        FollowService().follow(follower=viewer, following=author)
 
         html = client.get(FEED_URL).content.decode()
 
@@ -94,7 +105,7 @@ class TestPostCardAnatomy:
         user = _register_and_login(client)
         _create_post(user)
 
-        html = client.get(FEED_URL).content.decode()
+        html = client.get(f"/web/profile/{user.pk}/").content.decode()
 
         assert 'data-testid="post-menu"' in html
         assert 'data-testid="post-edit-button"' in html

@@ -1,0 +1,5 @@
+{% extends "web/base.html" %}
+{% block title %}Following · {{ profile_user.username }} · django_ig{% endblock %}
+{% block content %}
+{% include "web/partials/_following_list_modal.html" %}
+{% endblock %}

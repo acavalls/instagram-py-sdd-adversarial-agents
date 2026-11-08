@@ -32,10 +32,21 @@ from apps.posts.use_cases import (
     DeletePostUseCase,
     GetPostInput,
     GetPostUseCase,
-    ListPostsInput,
-    ListPostsUseCase,
     UpdatePostInput,
     UpdatePostUseCase,
+)
+from apps.social.services import FeedService, FollowService
+from apps.social.use_cases import (
+    FollowUserInput,
+    FollowUserOutput,
+    FollowUserUseCase,
+    GetUserSuggestionsInput,
+    GetUserSuggestionsUseCase,
+    ListFeedInput,
+    ListFeedUseCase,
+    UnfollowUserInput,
+    UnfollowUserOutput,
+    UnfollowUserUseCase,
 )
 
 REGISTER_SUCCESS_MESSAGE = "Account created successfully. Please login."
@@ -48,7 +59,13 @@ PASSWORD_MIN_LENGTH = 8
 POST_CREATE_SUCCESS_MESSAGE = "Post created!"
 POST_UPDATE_SUCCESS_MESSAGE = "Post updated!"
 POST_DELETE_SUCCESS_MESSAGE = "Post deleted!"
-FEED_PAGE_SIZE = 10
+FOLLOW_SUCCESS_MESSAGE = "Followed successfully"
+UNFOLLOW_SUCCESS_MESSAGE = "Unfollowed successfully"
+FOLLOW_BUTTON_PARTIAL = "web/partials/follow_button.html"
+FOLLOWING_LIST_PAGE = "web/following_list.html"
+FOLLOWING_LIST_PARTIAL = "web/partials/_following_list_modal.html"
+FEED_PAGE_SIZE = 12
+PROFILE_PAGE_SIZE = 12
 HX_REQUEST_HEADER = "HX-Request"
 
 
@@ -95,17 +112,18 @@ def logout_view(request: HttpRequest) -> HttpResponse:
 
 @login_required
 def feed_view(request: HttpRequest) -> HttpResponse:
-    """Personal feed: the logged-in user's own posts as cards, newest first.
+    """The home feed: the followed users' posts as cards, newest first.
 
     HTMX requests (the scroll sentinel) receive only the window of cards
     plus the next sentinel or the end marker, without the page shell; a
     non-HTMX request with a page parameter renders the full page with that
-    window. The interim content source is the user's own posts (package 03
-    replaces it with the followed-users feed).
+    window. When the user follows nobody the primary empty state invites
+    them to share their first photo; when they follow people but none of
+    them has posts, a secondary empty state replaces the cards.
     """
     page = _feed_page(request)
-    output = ListPostsUseCase(post_service=PostService()).execute(
-        ListPostsInput(
+    output = ListFeedUseCase(feed_service=FeedService()).execute(
+        ListFeedInput(
             user=_request_user(request),
             limit=FEED_PAGE_SIZE + 1,
             offset=(page - 1) * FEED_PAGE_SIZE,
@@ -113,10 +131,194 @@ def feed_view(request: HttpRequest) -> HttpResponse:
     )
     posts = output.posts[:FEED_PAGE_SIZE]
     has_next = len(output.posts) > FEED_PAGE_SIZE
-    context = {"posts": posts, "page": page, "has_next": has_next}
+    context = {
+        "posts": posts,
+        "page": page,
+        "has_next": has_next,
+        "follows_anyone": output.follows_anyone,
+    }
     if _is_htmx(request):
         return render(request, "web/partials/post_cards.html", context)
+    context["suggestions"] = _feed_suggestions(request)
     return render(request, "web/feed.html", context)
+
+
+def _feed_suggestions(request: HttpRequest) -> list[User]:
+    """Up to 5 accounts the requester does not follow, newest accounts first.
+
+    Rendered by the home feed sidebar (the suggestions column beside the
+    feed grid); HTMX card windows never render the sidebar so they skip
+    this query.
+    """
+    output = GetUserSuggestionsUseCase(feed_service=FeedService()).execute(
+        GetUserSuggestionsInput(user=_request_user(request))
+    )
+    return output.suggestions
+
+
+@login_required
+def profile_view(request: HttpRequest, user_id: uuid.UUID) -> HttpResponse:
+    """A user's profile page: header stats plus the posts grid, newest first.
+
+    HTMX requests (the scroll sentinel) receive only the next window of grid
+    items plus the next sentinel or the end marker, without the page shell;
+    a non-HTMX request with a page parameter renders the full page with that
+    window. On other profiles the follow button reflects the current
+    relationship (the toggle endpoints belong to the follow group).
+    """
+    profile_user = User.objects.filter(pk=user_id).first()
+    if profile_user is None:
+        raise Http404("User not found")
+    page = _feed_page(request)
+    window = PostService().list_for_user(
+        profile_user,
+        limit=PROFILE_PAGE_SIZE + 1,
+        offset=(page - 1) * PROFILE_PAGE_SIZE,
+    )
+    posts = window[:PROFILE_PAGE_SIZE]
+    has_next = len(window) > PROFILE_PAGE_SIZE
+    follow_service = FollowService()
+    is_own_profile = profile_user == _request_user(request)
+    context = {
+        "profile_user": profile_user,
+        "posts": posts,
+        "page": page,
+        "has_next": has_next,
+        "posts_count": len(PostService().list_for_user(profile_user)),
+        "followers_count": len(follow_service.get_followers(profile_user)),
+        "following_count": len(follow_service.get_following(profile_user)),
+        "is_own_profile": is_own_profile,
+        "is_following": (
+            False
+            if is_own_profile
+            else follow_service.is_following(_request_user(request), profile_user)
+        ),
+    }
+    if _is_htmx(request):
+        return render(request, "web/partials/profile_grid.html", context)
+    return render(request, "web/profile.html", context)
+
+
+@require_http_methods(["GET"])
+@login_required
+def following_list_view(request: HttpRequest, user_id: uuid.UUID) -> HttpResponse:
+    """The following-list modal of a profile: GET /web/profile/<user_id>/following/.
+
+    Part of the profile-scoped route family (profile page, follow toggle
+    endpoints): the profile's following stat link points here. A plain
+    request renders the modal as a page; the search box re-requests the
+    same endpoint through HTMX GET and the response (the modal partial
+    with the `q`-filtered list) swaps the modal in place. `q` filters the
+    followed users by username or name, case-insensitively (icontains).
+    """
+    profile_user = User.objects.filter(pk=user_id).first()
+    if profile_user is None:
+        raise Http404("User not found")
+    query = request.GET.get("q", "")
+    context = {
+        "profile_user": profile_user,
+        "users": _search_following(FollowService().get_following(profile_user), query),
+        "q": query,
+    }
+    if _is_htmx(request):
+        return render(request, FOLLOWING_LIST_PARTIAL, context)
+    return render(request, FOLLOWING_LIST_PAGE, context)
+
+
+def _search_following(users: list[User], query: str) -> list[User]:
+    """Followed users whose username or name matches the query (icontains).
+
+    Case-insensitive substring match over the list returned by
+    `FollowService.get_following` (newest relationship first), mirroring
+    the ORM's icontains semantics on username, first_name and last_name.
+    """
+    if not query:
+        return users
+    needle = query.lower()
+    return [
+        user
+        for user in users
+        if needle in user.username.lower()
+        or needle in user.first_name.lower()
+        or needle in user.last_name.lower()
+    ]
+
+
+@require_http_methods(["POST"])
+@login_required
+def follow_user_view(request: HttpRequest, user_id: uuid.UUID) -> HttpResponse:
+    """HTMX follow action: POST /web/profile/<user_id>/follow/.
+
+    Part of the profile-scoped route family (profile page, following
+    modal). Answers with the follow button partial in the new (following)
+    state plus the "Followed successfully" toast; a failure answers with
+    the button in its current (unchanged) state and an error toast
+    carrying the failure reason.
+    """
+    return _toggle_follow(request, user_id, following_requested=True)
+
+
+@require_http_methods(["POST"])
+@login_required
+def unfollow_user_view(request: HttpRequest, user_id: uuid.UUID) -> HttpResponse:
+    """HTMX unfollow action: POST /web/profile/<user_id>/unfollow/.
+
+    Same contract as the follow action, mirrored: success answers the
+    button back in the follow state with the "Unfollowed successfully"
+    toast; a failure keeps the following state and reports the reason.
+    """
+    return _toggle_follow(request, user_id, following_requested=False)
+
+
+def _toggle_follow(
+    request: HttpRequest, user_id: uuid.UUID, *, following_requested: bool
+) -> HttpResponse:
+    """Run the follow/unfollow use case and answer the button fragment.
+
+    Success re-renders the button in the new state; failure re-renders it
+    in its current (unchanged) state — the actual relationship is never
+    altered by a failed action — with the use case's error as the toast
+    reason (self-follow, duplicate, or unknown relationship).
+    """
+    target_user = User.objects.filter(pk=user_id).first()
+    if target_user is None:
+        raise Http404("User not found")
+    follower = _request_user(request)
+    output: FollowUserOutput | UnfollowUserOutput
+    if following_requested:
+        output = FollowUserUseCase(follow_service=FollowService()).execute(
+            FollowUserInput(follower=follower, following=target_user)
+        )
+    else:
+        output = UnfollowUserUseCase(follow_service=FollowService()).execute(
+            UnfollowUserInput(follower=follower, following=target_user)
+        )
+    if output.success:
+        return _follow_button_response(
+            request,
+            target_user,
+            is_following=following_requested,
+            toast=FOLLOW_SUCCESS_MESSAGE if following_requested else UNFOLLOW_SUCCESS_MESSAGE,
+        )
+    current_state = FollowService().is_following(follower, target_user)
+    return _follow_button_response(
+        request,
+        target_user,
+        is_following=current_state,
+        toast=output.error or "The action could not be completed",
+    )
+
+
+def _follow_button_response(
+    request: HttpRequest, target_user: User, *, is_following: bool, toast: str
+) -> HttpResponse:
+    response = render(
+        request,
+        FOLLOW_BUTTON_PARTIAL,
+        {"target_user": target_user, "is_following": is_following},
+    )
+    response["HX-Trigger"] = json.dumps({"toast": toast})
+    return response
 
 
 @require_http_methods(["POST"])

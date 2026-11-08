@@ -1,12 +1,23 @@
-{% for post in posts %}
-    {% include "web/partials/post_card.html" %}
-{% empty %}
+{% if posts %}
+    {% for post in posts %}
+        {% include "web/partials/post_card.html" %}
+    {% endfor %}
+{% elif follows_anyone %}
+    <section class="feed-empty" data-testid="feed-empty-secondary">
+        <p class="feed-empty-text">No posts from the people you follow yet.</p>
+    </section>
+{% else %}
     <section class="feed-empty" data-testid="feed-empty">
         <i class="bi bi-collection" aria-hidden="true"></i>
-        <p class="feed-empty-title">No posts yet</p>
-        <p class="feed-empty-text">Create your first post with the Create button in the sidebar.</p>
+        <p class="feed-empty-title">Share Photos</p>
+        <p class="feed-empty-text">Follow people to see their photos here, or share your first one.</p>
+        <form class="feed-empty-cta" method="post" action="{% url 'web:create_post' %}"
+              data-testid="feed-empty-cta">
+            {% csrf_token %}
+            <button type="submit">Share your first photo</button>
+        </form>
     </section>
-{% endfor %}
+{% endif %}
 {% if has_next %}
     <div class="feed-sentinel" data-testid="feed-sentinel"
          hx-get="{% url 'web:feed' %}?page={{ page|add:1 }}"

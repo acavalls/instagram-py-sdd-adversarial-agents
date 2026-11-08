@@ -13,6 +13,7 @@ from apps.accounts.models import User
 from apps.posts.models import Post
 from apps.posts.services import PostService
 from apps.posts.use_cases import CreatePostInput, CreatePostUseCase
+from apps.social.services import FollowService
 
 LOGIN_URL = "/web/login/"
 REGISTER_URL = "/web/register/"
@@ -81,9 +82,11 @@ class TestOwnershipAcrossWebPaths:
 @pytest.mark.django_db
 class TestFeedWindowsWithManyPosts:
     def test_htmx_window_is_stable_across_hostile_page_params(self, client) -> None:
-        user = _register_and_login(client, "feedheavy")
+        author = _register_and_login(client, "feedauthor")
         for index in range(25):
-            _create_post(user, caption=f"post {index}")
+            _create_post(author, caption=f"post {index}")
+        viewer = _register_and_login(client, "feedheavy")
+        FollowService().follow(follower=viewer, following=author)
 
         first = client.get(FEED_URL, HTTP_HX_REQUEST="true")
         second = client.get(f"{FEED_URL}?page=2", HTTP_HX_REQUEST="true")
@@ -95,7 +98,7 @@ class TestFeedWindowsWithManyPosts:
         assert garbage.status_code == 200
         assert beyond.status_code == 200
         assert b"post 24" in first.content
-        assert b"post 14" in second.content
-        assert b"post 4" not in second.content
+        assert b"post 12" in second.content
+        assert b"post 13" not in second.content
         assert b"post 24" in garbage.content
         assert b"post-card" not in beyond.content

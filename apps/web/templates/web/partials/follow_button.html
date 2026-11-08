@@ -1,0 +1,8 @@
+<button type="button" class="profile-follow-button" data-testid="follow-button"
+        data-following="{% if is_following %}true{% else %}false{% endif %}"
+        {% if is_following %}hx-post="{% url 'web:unfollow' target_user.pk %}"
+        {% else %}hx-post="{% url 'web:follow' target_user.pk %}"{% endif %}
+        hx-target="this" hx-swap="outerHTML"
+        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+    {% if is_following %}Following{% else %}Follow{% endif %}
+</button>

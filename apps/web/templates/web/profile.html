@@ -1,0 +1,48 @@
+{% extends "web/base.html" %}
+{% block title %}{{ profile_user.username }} · django_ig{% endblock %}
+{% block content %}
+<section class="profile" data-testid="profile">
+    <header class="profile-header" data-testid="profile-header">
+        <div class="profile-avatar" data-testid="profile-avatar"
+             aria-hidden="true">{{ profile_user.username|first|upper }}</div>
+        <div class="profile-meta">
+            <h1 class="profile-username" data-testid="profile-username">{{ profile_user.username }}</h1>
+            {% if not is_own_profile %}
+            {% include "web/partials/follow_button.html" with target_user=profile_user is_following=is_following %}
+            {% endif %}
+        </div>
+        <ul class="profile-stats" data-testid="profile-stats">
+            <li class="profile-stat">
+                <span class="profile-stat-value" data-testid="profile-stat-posts">{{ posts_count }}</span>
+                posts
+            </li>
+            <li class="profile-stat">
+                <span class="profile-stat-value" data-testid="profile-stat-followers">{{ followers_count }}</span>
+                followers
+            </li>
+            <li class="profile-stat">
+                <a class="profile-stat-link" data-testid="profile-stat-following-link"
+                   href="/web/profile/{{ profile_user.pk }}/following/">
+                    <span class="profile-stat-value" data-testid="profile-stat-following">{{ following_count }}</span>
+                    following
+                </a>
+            </li>
+        </ul>
+    </header>
+    <nav class="profile-tabs" data-testid="profile-tabs">
+        <a class="profile-tab profile-tab--active" data-testid="profile-tab-posts"
+           href="{% url 'web:profile' profile_user.pk %}" aria-current="page">POSTS</a>
+        <a class="profile-tab profile-tab--placeholder" data-testid="profile-tab-saved"
+           aria-disabled="true" tabindex="-1">SAVED</a>
+        <a class="profile-tab profile-tab--placeholder" data-testid="profile-tab-tagged"
+           aria-disabled="true" tabindex="-1">TAGGED</a>
+    </nav>
+    {% if posts %}
+    <section class="profile-grid" data-testid="profile-grid">
+        {% include "web/partials/profile_grid.html" %}
+    </section>
+    {% else %}
+    <p class="profile-empty" data-testid="profile-empty">No posts yet.</p>
+    {% endif %}
+</section>
+{% endblock %}

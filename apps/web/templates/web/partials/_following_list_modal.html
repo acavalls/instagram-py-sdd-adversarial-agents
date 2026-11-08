@@ -1,0 +1,33 @@
+<div class="modal-backdrop" id="following-modal" data-testid="following-modal"
+     role="dialog" aria-modal="true" aria-label="Following">
+    <div class="modal">
+        <header class="modal-header">
+            <h2 class="modal-title" data-testid="following-modal-title">Following</h2>
+            <a class="modal-close" data-testid="following-modal-close"
+               href="{% url 'web:profile' profile_user.pk %}" aria-label="Close">&#10005;</a>
+        </header>
+        <form class="following-search" method="get"
+              action="{% url 'web:following_list' profile_user.pk %}"
+              hx-get="{% url 'web:following_list' profile_user.pk %}"
+              hx-target="#following-modal" hx-swap="outerHTML"
+              data-testid="following-search-form">
+            <input class="following-search-input" type="search" name="q" value="{{ q }}"
+                   placeholder="Search" aria-label="Search following"
+                   data-testid="following-search-input">
+        </form>
+        <ul class="following-list" data-testid="following-list">
+            {% for followed in users %}
+            <li class="following-row" data-testid="following-row">
+                <a class="following-avatar" href="{% url 'web:profile' followed.pk %}"
+                   data-testid="following-avatar" aria-hidden="true">{{ followed.username|first|upper }}</a>
+                <a class="following-username" href="{% url 'web:profile' followed.pk %}"
+                   data-testid="following-username">{{ followed.username }}</a>
+            </li>
+            {% empty %}
+            <li class="following-empty" data-testid="following-empty">
+                {% if q %}No results for &ldquo;{{ q }}&rdquo;.{% else %}Not following anyone yet.{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
