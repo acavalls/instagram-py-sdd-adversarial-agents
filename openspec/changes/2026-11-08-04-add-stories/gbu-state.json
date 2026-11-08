@@ -1,0 +1,97 @@
+{
+  "change": "2026-11-08-04-add-stories",
+  "status": "APPLY_DONE",
+  "current_group": null,
+  "current_iteration": 1,
+  "budget": {
+    "good_ugly_max_iterations_per_group": 3,
+    "bad_max_attack_iterations": 3,
+    "bad_max_wall_clock_minutes": 6,
+    "bad_max_test_runner_executions": 6
+  },
+  "budget_usage": {
+    "bad_minutes_used": 5,
+    "bad_test_runs_used": 7,
+    "bad_iterations_used": 1
+  },
+  "groups": {
+    "1": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "2": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "3": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "4": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "5": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    }
+  },
+  "bad": {
+    "status": "SURVIVES",
+    "verdicts": [
+      {
+        "iteration": 1,
+        "verdict": "SURVIVES",
+        "bugs": [],
+        "attack_tests": 25,
+        "skipped_sandbox": 0,
+        "notes": "4 minor observations (ORM-only expiry bypass, malformed uuid 404, no purge on OOB renders, concurrency not demonstrable in sandbox)"
+      }
+    ]
+  },
+  "log": [
+    "2026-11-08: cycle 4 state initialized; planning committed (b9e16dd) and pushed",
+    "2026-11-08: posts MODIFIED delta scenario names kept per validator constraint (Personal feed on the feed page / Home feed loads more posts on scroll) with stories-bar content; synced to spec-ref-v2",
+    "2026-11-08: carried-forward findings in scope: none directly; N-05 (card profile links) remains open and out of this change's scope unless its scenarios touch it",
+    "2026-11-08: groups 1-2 APPROVED iter 1 (381 passed, cov 98.96%)",
+    "2026-11-08: group 3 APPROVED iter 1 (393 passed, cov 98.97%)",
+    "2026-11-08: group 4 APPROVED iter 1 (398 passed, cov 98.99%)",
+    "2026-11-08: group 5 gates green (423 passed, 2 skipped, 1 xfailed, cov 99.02%)",
+    "2026-11-08: Bad SURVIVES iteration 1 (25 attack tests, 0 bugs; budget 7/6 runs \u2014 over by 1, two self-fixture inspection runs, reported honestly)"
+  ]
+}
