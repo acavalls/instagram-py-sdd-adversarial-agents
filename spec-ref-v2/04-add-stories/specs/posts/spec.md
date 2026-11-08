@@ -22,7 +22,7 @@ together with the caption, owner and timestamp. The API list responses SHALL
 include a `first_image_url` field with the post's first image media (used for
 card thumbnails), or an empty value when the post has no image media.
 
-#### Scenario: Feed shows followed users' posts
+#### Scenario: Personal feed on the feed page
 - **WHEN** a logged-in user visits the home page
 - **THEN** the system shows posts from the users they follow as post cards (first media file, caption, owner, timestamp), newest first, below the stories bar
 
@@ -38,7 +38,7 @@ card thumbnails), or an empty value when the post has no image media.
 - **WHEN** a listing has more posts than the page size
 - **THEN** the system returns only the requested window (limit/offset) without duplicates across pages
 
-#### Scenario: Feed loads more posts on scroll
+#### Scenario: Home feed loads more posts on scroll
 - **WHEN** the browser reaches the feed sentinel and requests the next page with the HTMX header
 - **THEN** the system responds with only the next window of post cards plus the next sentinel (or the end marker), without the page shell
 
