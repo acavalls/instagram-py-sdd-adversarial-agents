@@ -1,0 +1,37 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py"]
+addopts = "--cov=apps --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["apps"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".opencode", "migrations"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "DJ"]
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main"]
+python_version = "3.12"
+check_untyped_defs = true
+files = ["manage.py", "config", "apps", "tests"]
+exclude = ["migrations"]
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"
+
+[[tool.mypy.overrides]]
+module = [
+    "rest_framework.*",
+    "rest_framework_simplejwt.*",
+    "drf_spectacular.*",
+]
+ignore_missing_imports = true
