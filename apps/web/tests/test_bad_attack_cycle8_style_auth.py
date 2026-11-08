@@ -10,10 +10,9 @@ Attack targets:
 import re
 
 import pytest
-from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 
-User = get_user_model()
+from apps.accounts.models import User
 
 LOGIN_URL = "/web/login/"
 LOGOUT_URL = "/web/logout/"
@@ -49,7 +48,7 @@ class TestNoLeakIntoAuthenticatedPages:
         assert 'data-testid="stories-bar"' in feed_html
 
         profile_user = _make_user("leakchecktarget")
-        profile = client.get(f"/web/profile/{profile_user.id}/")
+        profile = client.get(f"/web/profile/{profile_user.pk}/")
         assert profile.status_code == 200
         profile_html = profile.content.decode()
         assert FONTS_LINK not in profile_html
