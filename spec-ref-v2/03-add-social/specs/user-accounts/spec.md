@@ -15,10 +15,10 @@ SHALL show the posts of the users the logged-in user follows, as defined in
 the `social` capability. The user's own posts remain reachable through the
 posts API.
 
-#### Scenario: Landing requires login
+#### Scenario: Placeholder requires login
 - **WHEN** an anonymous visitor requests `/web/feed/`
 - **THEN** the system redirects to the login page
 
-#### Scenario: Logged-in user reaches the landing
+#### Scenario: Logged-in user reaches the placeholder
 - **WHEN** a logged-in user requests `/web/feed/`
 - **THEN** the system renders the feed page showing posts from the users they follow

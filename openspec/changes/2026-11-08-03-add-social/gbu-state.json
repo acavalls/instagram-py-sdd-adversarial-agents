@@ -1,0 +1,150 @@
+{
+  "change": "2026-11-08-03-add-social",
+  "status": "APPLY_DONE",
+  "current_group": null,
+  "current_iteration": 1,
+  "budget": {
+    "good_ugly_max_iterations_per_group": 3,
+    "bad_max_attack_iterations": 3,
+    "bad_max_wall_clock_minutes": 6,
+    "bad_max_test_runner_executions": 6
+  },
+  "budget_usage": {
+    "bad_minutes_used": 1,
+    "bad_test_runs_used": 6,
+    "bad_iterations_used": 1
+  },
+  "groups": {
+    "1": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "2": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "3": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "4": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "5": {
+      "status": "APPROVED",
+      "good_iterations": 2,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "REJECTED",
+          "deviations": [
+            "DEV-001 unknown-relationship cause lacked web-path test"
+          ]
+        },
+        {
+          "iteration": 2,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "6": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "7": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "8": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "9": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    }
+  },
+  "bad": {
+    "status": "SURVIVES",
+    "verdicts": [
+      {
+        "iteration": 1,
+        "verdict": "SURVIVES",
+        "bugs": [],
+        "attack_tests": 31,
+        "skipped_sandbox": 2,
+        "notes": "4 minor observations (perf/edge), no spec violations"
+      }
+    ]
+  },
+  "log": [
+    "2026-11-08: cycle 3 state initialized; planning committed (f838e3e) and pushed",
+    "2026-11-08: cycle-2 deltas adapted for tooling: MODIFIED scenario names kept (user-accounts landing, posts listing) with new content; Notes moved to design.md; synced back to spec-ref-v2",
+    "2026-11-08: carried-forward findings in scope for this change: N-01 (landing contradiction resolved by this change's MODIFIED deltas), N-05 (card profile link wired by this change), F-01/F-02/F-03/F-04..F-09 remain out of scope unless this change's scenarios touch them",
+    "2026-11-08: groups 1-3 APPROVED on first iteration (302 passed, 1 xfailed, cov 99.17%)",
+    "2026-11-08: group 4 APPROVED iter 1 (312 passed, cov 99.20%); group 5 REJECTED iter 1 (DEV-001) -> fixed -> APPROVED iter 2 (319 passed, cov 99.22%)",
+    "2026-11-08: groups 6-7 APPROVED iter 1 (327 passed, cov 99.26%)",
+    "2026-11-08: group 8 APPROVED iter 1 (332 passed, cov 99.27%)",
+    "2026-11-08: group 9 gates green (361 passed, 2 skipped, 1 xfailed, cov 98.92%, ruff/mypy/check clean)",
+    "2026-11-08: Bad SURVIVES iteration 1 (31 attack tests, 0 bugs, 2 sandbox-skipped thread-race tests; budget 6/6 runs, ~1 min)",
+    "2026-11-08: Bad test files normalized (ruff format + manual F841 lint-only edits + 1 mypy type-ignore)"
+  ]
+}

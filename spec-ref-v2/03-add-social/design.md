@@ -55,7 +55,10 @@ refer to it (the landing content and the sidebar Profile entry).
 
 6. **Web caption guard**: the oversized-caption edit is rejected on the
    web path too, keeping the post unchanged and reporting the error —
-   the same limit enforced by the model and the API.
+   the same limit enforced by the model and the API. The behavior is
+   already pinned by the posts capability's "Caption length limit"
+   scenario ("created or updated" covers every path); this package adds
+   the web-path test in the task list, without a new requirement.
 
 ## Dependency-wiring map
 
