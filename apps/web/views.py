@@ -21,7 +21,7 @@ from apps.accounts.use_cases import (
     RegisterUserUseCase,
 )
 from apps.posts.models import PostMedia
-from apps.posts.services import PostMediaInput, PostService
+from apps.posts.services import PostMediaInput, PostService, StoryService
 from apps.posts.services.media_generator import generate_placeholder_image, random_caption
 from apps.posts.use_cases import (
     ERROR_POST_EDIT_FORBIDDEN,
@@ -48,6 +48,7 @@ from apps.social.use_cases import (
     UnfollowUserOutput,
     UnfollowUserUseCase,
 )
+from apps.web.story_views import stories_bar_context
 
 REGISTER_SUCCESS_MESSAGE = "Account created successfully. Please login."
 LOGIN_SUCCESS_MESSAGE = "Logged in successfully"
@@ -114,13 +115,17 @@ def logout_view(request: HttpRequest) -> HttpResponse:
 def feed_view(request: HttpRequest) -> HttpResponse:
     """The home feed: the followed users' posts as cards, newest first.
 
-    HTMX requests (the scroll sentinel) receive only the window of cards
+    Rendering the home page purges expired stories (and their view
+    records) before display, so the stories bar never shows them. HTMX
+    requests (the scroll sentinel) receive only the window of cards
     plus the next sentinel or the end marker, without the page shell; a
     non-HTMX request with a page parameter renders the full page with that
-    window. When the user follows nobody the primary empty state invites
+    window, the stories bar above the post list and the suggestions
+    sidebar. When the user follows nobody the primary empty state invites
     them to share their first photo; when they follow people but none of
     them has posts, a secondary empty state replaces the cards.
     """
+    StoryService().cleanup_expired()
     page = _feed_page(request)
     output = ListFeedUseCase(feed_service=FeedService()).execute(
         ListFeedInput(
@@ -140,6 +145,7 @@ def feed_view(request: HttpRequest) -> HttpResponse:
     if _is_htmx(request):
         return render(request, "web/partials/post_cards.html", context)
     context["suggestions"] = _feed_suggestions(request)
+    context.update(stories_bar_context(_request_user(request)))
     return render(request, "web/feed.html", context)
 
 

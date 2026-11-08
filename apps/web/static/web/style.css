@@ -824,3 +824,109 @@ body {
         max-width: 470px;
     }
 }
+
+/* Stories bar: "Your story" button plus one avatar per followed group */
+.stories-bar {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.8rem;
+    background: var(--ig-card);
+    border: 1px solid var(--ig-border);
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+.story-create,
+.story-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    flex-shrink: 0;
+}
+
+.story-add,
+.story-avatar {
+    border: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.story-ring {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 1.1rem;
+    background: var(--ig-border);
+    color: #262626;
+    overflow: hidden;
+}
+
+.story-ring--unviewed {
+    background: linear-gradient(45deg, #f09433 0%, #dc2743 50%, #bc1888 100%);
+    color: #fff;
+}
+
+.story-ring--viewed {
+    background: var(--ig-border);
+    color: #8e8e8e;
+}
+
+.story-ring--none {
+    background: none;
+    border: 2px dashed var(--ig-border);
+    color: #8e8e8e;
+    font-size: 1.4rem;
+}
+
+.story-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.story-add-label,
+.story-username {
+    max-width: 64px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    color: #262626;
+}
+
+/* Toasts (page container plus HTMX out-of-band swaps) */
+#messages {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.toast {
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    background: #262626;
+    color: #fff;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.toast-success {
+    background: #268e41;
+}
+
+.toast-error {
+    background: #ed4956;
+}

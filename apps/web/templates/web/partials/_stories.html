@@ -1,0 +1,33 @@
+{# The stories bar: the "Your story" creation button plus one avatar per followed user with active stories, in bar order (unviewed groups first).
+
+   When rendered with `oob=True` the section carries `hx-swap-oob`, so an
+   HTMX story action (create or view) replaces the page's bar in place. #}
+<section class="stories-bar" id="stories-bar" data-testid="stories-bar"{% if oob %} hx-swap-oob="true"{% endif %}>
+    <form class="story-create" method="post" action="{% url 'web:create_story' %}"
+          hx-post="{% url 'web:create_story' %}" hx-swap="none"
+          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+          data-testid="story-create">
+        {% csrf_token %}
+        <button type="submit" class="story-add" data-testid="story-add">
+            <span class="story-ring story-ring--none" aria-hidden="true"><i class="bi bi-plus"></i></span>
+            <span class="story-add-label">Your story</span>
+        </button>
+    </form>
+    {% for group in story_groups %}
+    <form class="story-item" method="post" action="{% url 'web:view_story' group.stories.0.story.pk %}"
+          hx-post="{% url 'web:view_story' group.stories.0.story.pk %}" hx-swap="none"
+          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+          data-testid="story-item">
+        {% csrf_token %}
+        <button type="submit" class="story-avatar story-ring{% if group.stories.0.is_viewed %} story-ring--viewed{% else %} story-ring--unviewed{% endif %}"
+                data-testid="story-avatar" data-username="{{ group.owner.username }}"
+                data-viewed="{% if group.stories.0.is_viewed %}true{% else %}false{% endif %}"
+                aria-label="View {{ group.owner.username }}'s story">
+            {% if group.owner.profile_pic %}
+            <img class="story-avatar-img" src="{{ group.owner.profile_pic.url }}" alt="">
+            {% else %}{{ group.owner.username|first|upper }}{% endif %}
+        </button>
+        <span class="story-username" data-testid="story-username">{{ group.owner.username }}</span>
+    </form>
+    {% endfor %}
+</section>

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from apps.web import views
+from apps.web import story_views, views
 
 app_name = "web"
 
@@ -17,4 +17,6 @@ urlpatterns = [
     path("posts/<uuid:post_id>/card/", views.post_card_view, name="post_card"),
     path("posts/<uuid:post_id>/edit/", views.post_edit_view, name="post_edit"),
     path("posts/<uuid:post_id>/delete/", views.post_delete_view, name="post_delete"),
+    path("stories/create/", story_views.create_story_view, name="create_story"),
+    path("stories/<uuid:story_id>/view/", story_views.view_story_view, name="view_story"),
 ]

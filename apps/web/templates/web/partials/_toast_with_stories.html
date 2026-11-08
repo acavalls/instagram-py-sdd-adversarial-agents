@@ -1,0 +1,7 @@
+{# HTMX answer of a story action: the new toast (swapping the page's messages container out of band) plus a fresh stories bar (also out of band), so the bar's ring states and order update in place. #}
+<div id="messages" hx-swap-oob="true" data-testid="messages">
+    {% for message in messages %}
+    <div class="toast toast-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+</div>
+{% include "web/partials/_stories.html" with oob=True %}

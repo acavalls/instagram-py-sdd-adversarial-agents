@@ -3,6 +3,7 @@
 {% block content %}
 <div class="home-layout" data-testid="home-layout">
     <section class="feed" data-testid="feed">
+        {% include "web/partials/_stories.html" %}
         {% include "web/partials/post_cards.html" %}
     </section>
     {% include "web/partials/_feed_sidebar.html" %}

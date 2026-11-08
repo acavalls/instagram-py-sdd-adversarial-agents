@@ -6,8 +6,8 @@ from django.core.files.base import ContentFile
 from django.utils import timezone
 
 from apps.accounts.models import User
-from apps.posts.models import Post
-from apps.posts.services import PostMediaInput, PostService
+from apps.posts.models import Post, Story
+from apps.posts.services import PostMediaInput, PostService, StoryService
 from apps.posts.use_cases import CreatePostInput, CreatePostUseCase
 from apps.social.services import FollowService
 
@@ -52,6 +52,17 @@ def _set_created_at(post: Post, minutes_ago: int) -> None:
 
 def _follow(follower: User, following: User) -> None:
     FollowService().follow(follower=follower, following=following)
+
+
+def _create_story(owner: User) -> Story:
+    output = StoryService().create(owner=owner)
+    assert output.success and output.story is not None
+    return output.story
+
+
+def _cleanup_story_media() -> None:
+    for story in Story.objects.all():
+        story.image.delete(save=False)
 
 
 def _card_ids(html: str) -> list[str]:
@@ -114,6 +125,25 @@ class TestFeedContent:
         assert "stranger post" not in html
         assert "own post" not in html
         assert 'data-testid="post-username">alice</a>' not in html
+
+    def test_feed_renders_the_stories_bar_above_the_post_list(self, client) -> None:
+        user = _register_and_login(client)
+        author = _register_and_login(client, "bob")
+        _follow(user, author)
+        _create_post(author, caption="bob post")
+        _create_story(author)
+        _login(client, "alice")
+
+        try:
+            response = client.get(FEED_URL)
+        finally:
+            _cleanup_story_media()
+
+        assert response.status_code == 200
+        html = response.content.decode()
+        assert 'data-testid="stories-bar"' in html
+        assert 'data-username="bob"' in html
+        assert html.index('data-testid="stories-bar"') < html.index('data-testid="post-card"')
 
     def test_feed_ordered_newest_first_with_pagination(self, client) -> None:
         user = _register_and_login(client)
