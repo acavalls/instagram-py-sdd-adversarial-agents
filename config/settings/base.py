@@ -108,8 +108,8 @@ SIMPLE_JWT = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "django_ig API",
-    "DESCRIPTION": "REST API of django_ig, an Instagram clone learning project.",
+    "TITLE": "Instagram API",
+    "DESCRIPTION": "REST API of Instagram, an Instagram clone learning project.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }

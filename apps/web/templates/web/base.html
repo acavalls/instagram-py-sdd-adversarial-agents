@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}django_ig{% endblock %}</title>
+    <title>{% block title %}Instagram{% endblock %}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{% static 'web/style.css' %}">
     <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
@@ -15,7 +15,7 @@
         <nav class="sidebar-nav">
             <a class="sidebar-logo" href="{% url 'web:feed' %}" data-testid="sidebar-logo">
                 <i class="bi bi-instagram" aria-hidden="true"></i>
-                <span class="sidebar-label">django_ig</span>
+                <span class="sidebar-label">Instagram</span>
             </a>
             <a class="sidebar-link{% if request.path == '/web/feed/' %} active{% endif %}"
                href="{% url 'web:feed' %}" data-testid="nav-home">
