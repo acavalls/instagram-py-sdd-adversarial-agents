@@ -159,9 +159,10 @@ without issuing a new access token.
 
 ### Requirement: Authenticated landing placeholder
 The system SHALL serve a feed page at `/web/feed/` that requires an
-authenticated session and acts as the landing page after web login. Until
-the social capability delivers the followed-users feed, the page SHALL show
-a declared placeholder empty state instead of posts.
+authenticated session and acts as the landing page after web login. The page
+SHALL show the posts of the users the logged-in user follows, as defined in
+the `social` capability. The user's own posts remain reachable through the
+posts API.
 
 #### Scenario: Placeholder requires login
 - **WHEN** an anonymous visitor requests `/web/feed/`
@@ -169,4 +170,4 @@ a declared placeholder empty state instead of posts.
 
 #### Scenario: Logged-in user reaches the placeholder
 - **WHEN** a logged-in user requests `/web/feed/`
-- **THEN** the system renders the feed page with the declared placeholder empty state
+- **THEN** the system renders the feed page showing posts from the users they follow

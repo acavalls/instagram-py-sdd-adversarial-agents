@@ -78,19 +78,19 @@ trimming is stored as the empty string.
 
 ### Requirement: Post listing
 The system SHALL list a user's own posts ordered by creation date, newest
-first, with limit/offset pagination through `GET /api/posts/`. The home page
-SHALL show the logged-in user's own posts as post cards, loaded through HTMX
-infinite scroll. A non-HTMX request with a page parameter SHALL render the
-full page with the posts of that window. Post cards SHALL show the post's
-first media file together with the caption, owner and timestamp. The API
-list responses SHALL include a `first_image_url` field with the post's first
-image media (used for card thumbnails), or an empty value when the post has
-no image media. (Interim state: package 03 of this sequence replaces the
-home page content with the followed-users feed.)
+first, with limit/offset pagination through `GET /api/posts/` and the
+owner's profile grid. The home page SHALL show posts from the users the
+logged-in user follows (defined in the social capability) instead of their
+own posts, and SHALL load further pages through HTMX infinite scroll. A
+non-HTMX request with a page parameter SHALL render the full page with the
+posts of that window. Post cards SHALL show the post's first media file
+together with the caption, owner and timestamp. The API list responses SHALL
+include a `first_image_url` field with the post's first image media (used for
+card thumbnails), or an empty value when the post has no image media.
 
 #### Scenario: Personal feed on the feed page
 - **WHEN** a logged-in user visits the home page
-- **THEN** the system shows their own posts as post cards (first media file, caption, owner, timestamp), newest first
+- **THEN** the system shows posts from the users they follow as post cards (first media file, caption, owner, timestamp), newest first
 
 #### Scenario: API list of own posts
 - **WHEN** a client requests `GET /api/posts/` with optional limit and offset
