@@ -3,7 +3,7 @@ import threading
 import uuid
 from typing import ClassVar
 
-from django.contrib.auth.hashers import identify_hasher, make_password
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -62,6 +62,9 @@ class UserQuerySet(models.QuerySet):
     def bulk_create(self, objs, *args, **kwargs):  # type: ignore[override]
         for obj in objs:
             _validate_bulk_username(obj.username)
+            if obj._password_needs_hashing():
+                obj.password = make_password(obj.password)
+                obj._password_is_hash = True
         return super().bulk_create(objs, *args, **kwargs)
 
     def bulk_update(self, objs, fields, *args, **kwargs):  # type: ignore[override]
@@ -79,14 +82,28 @@ class UserQuerySet(models.QuerySet):
 class UserManager(BaseUserManager.from_queryset(UserQuerySet)):  # type: ignore[misc]
     """Default manager with bulk-write username enforcement."""
 
+    def create_user(  # type: ignore[override]
+        self, username: str, email: str | None = None, password: str | None = None, **extra_fields
+    ):
+        return self._create_user(username, email, password, **extra_fields)
+
+    def create_superuser(  # type: ignore[override]
+        self, username: str, email: str | None = None, password: str | None = None, **extra_fields
+    ):
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Superuser must have is_staff=True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser=True.")
+        return self._create_user(username, email, password, **extra_fields)
+
     def _create_user(self, username: str, email: str | None, password: str | None, **extra_fields):  # type: ignore[override]
         validate_username(username)
         if email:
             validate_email(email)
-        user = self.model(
-            username=username, email=self.normalize_email(email or ""), **extra_fields
-        )
-        user.password = make_password(password)
+        user = self.model(username=username, email=email or "", **extra_fields)
+        user.set_password(password)
         user.save(using=self._db)
         return user
 
@@ -112,8 +129,47 @@ class User(AbstractUser):
 
     objects: ClassVar[UserManager] = UserManager()
 
+    # Password provenance tracking. `password` is a plain CharField, so a
+    # raw value and an encoded hash are indistinguishable by shape; the
+    # hashing decision therefore relies on explicit state instead of
+    # string inspection:
+    # - `_password_is_hash`: True only when the current value was produced
+    #   by `set_password` (or explicitly marked by a trusted writer, e.g.
+    #   the accounts.0003 bootstrap that assigns a pre-computed hash).
+    # - `_original_password`: the value as loaded from the database, so a
+    #   re-save of an unchanged loaded instance never re-hashes its stored
+    #   hash.
+    _password_is_hash = False
+    _original_password: str | None = None
+
     def __str__(self) -> str:
         return self.username
+
+    @classmethod
+    def from_db(cls, db, field_names, values):  # type: ignore[override]
+        instance = super().from_db(db, field_names, values)
+        instance._original_password = instance.password
+        return instance
+
+    def refresh_from_db(self, using=None, fields=None):  # type: ignore[override]
+        super().refresh_from_db(using=using, fields=fields)
+        if fields is None or "password" in fields:
+            self._original_password = self.password
+
+    def set_password(self, raw_password: str | None) -> None:  # type: ignore[override]
+        super().set_password(raw_password)
+        self._password_is_hash = True
+
+    def clean(self) -> None:
+        """Keep the email byte-exact during model validation.
+
+        `AbstractUser.clean` normalizes the email's domain to lowercase
+        via `objects.normalize_email`, which would violate the
+        byte-exact, case-sensitive email uniqueness rule; this override
+        preserves the registrant's exact email (local part and domain)
+        while keeping the username normalization.
+        """
+        self.username = self.normalize_username(self.username)
 
     def save(self, *args, **kwargs):
         """Enforce the username and password rules on the direct storage path.
@@ -131,16 +187,29 @@ class User(AbstractUser):
             return
         if self._password_needs_hashing():
             self.password = make_password(self.password)
+            self._password_is_hash = True
         super().save(*args, **kwargs)
 
     def _password_needs_hashing(self) -> bool:
+        """Decide whether the password needs hashing on the storage path.
+
+        The decision relies on provenance, not on string shape (a raw
+        password can be crafted to look exactly like an encoded hash, so
+        shape-based detection is unreliable):
+
+        - a value produced by `set_password` (or explicitly marked as a
+          trusted hash by a writer such as the accounts.0003 bootstrap) is
+          already hashed;
+        - a value loaded from the database and left unchanged is the
+          stored hash already;
+        - anything else (new instances, or a loaded instance whose
+          password was replaced) is raw and MUST be hashed.
+        """
         if not self.password:
             return False
-        try:
-            identify_hasher(self.password)
-        except ValueError:
-            return True
-        return False
+        if self._password_is_hash:
+            return False
+        return self.password != self._original_password
 
     @classmethod
     def validate_registration(cls, *, username: str, email: str) -> None:

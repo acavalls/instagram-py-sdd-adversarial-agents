@@ -14,6 +14,7 @@ class UserCreateSerializer(serializers.Serializer):
     username = serializers.CharField(
         min_length=3,
         max_length=150,
+        trim_whitespace=False,
         error_messages={
             "min_length": "Username must be at least 3 characters",
             "max_length": "Username must be 150 characters or fewer",

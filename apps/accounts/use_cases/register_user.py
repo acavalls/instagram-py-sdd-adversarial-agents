@@ -61,8 +61,17 @@ class RegisterUserUseCase:
 
     @staticmethod
     def _duplicate_error(input_dto: RegisterUserInput) -> str:
+        """Map a race past the duplicate checks to the right error.
+
+        Emails are stored byte-exactly, so the submitted email matches
+        the stored value exactly; username and email duplicates are
+        checked distinctly so an email collision can never be reported
+        as a username collision (and vice versa).
+        """
         if User._default_manager.filter(email=input_dto.email).exists():
             return ERROR_EMAIL_ALREADY_REGISTERED
+        if User._default_manager.filter(username=input_dto.username).exists():
+            return ERROR_USERNAME_ALREADY_TAKEN
         return ERROR_USERNAME_ALREADY_TAKEN
 
     @staticmethod

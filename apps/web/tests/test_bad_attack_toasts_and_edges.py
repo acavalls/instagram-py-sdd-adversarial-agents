@@ -49,13 +49,26 @@ class TestLogoutCsrf:
 
 
 class TestEmailCaseVariants:
-    @pytest.mark.xfail(
-        reason="MEDIUM: email duplicate detection is case-sensitive; "
-        "'Foo@X.com' is accepted while 'foo@x.com' exists",
-        strict=True,
-    )
-    def test_uppercased_email_is_detected_as_duplicate(self):
+    def test_uppercased_email_variant_is_accepted_byte_exact_uniqueness(self):
         User.objects.create(username="caseone", email="foo@x.com", password="password123")
         client = Client()
-        response = _register(client, "casetwo", "Foo@X.com", "password123")
+        response = _register(client, "casetwo", "FOO@x.com", "password123")
+        assert response.status_code == 302
+        assert User.objects.get(username="casetwo").email == "FOO@x.com"
+
+    def test_domain_case_email_variant_is_accepted_byte_exact_uniqueness(self):
+        User.objects.create(username="caseone", email="foo@x.com", password="password123")
+        client = Client()
+        response = _register(client, "casetwo", "foo@X.COM", "password123")
+        assert response.status_code == 302
+        assert User.objects.get(username="casetwo").email == "foo@X.COM"
+        assert User.objects.filter(email="foo@X.COM").count() == 1
+        assert User.objects.filter(email="foo@x.com").count() == 1
+
+    def test_identical_email_is_rejected_as_duplicate(self):
+        User.objects.create(username="caseone", email="foo@x.com", password="password123")
+        client = Client()
+        response = _register(client, "casetwo", "foo@x.com", "password123")
+        assert response.status_code == 200
         assert "Email already registered" in response.content.decode()
+        assert User.objects.filter(email="foo@x.com").count() == 1

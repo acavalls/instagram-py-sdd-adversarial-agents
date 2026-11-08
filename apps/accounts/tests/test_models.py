@@ -155,6 +155,9 @@ class TestLegalUsernameBulkWriteApplies:
 
         assert User.objects.filter(username="bulkuser1").exists()
         assert created[0].username == "bulkuser1"
+        stored = User.objects.get(username="bulkuser1")
+        assert stored.password != "x"
+        assert stored.check_password("x")
 
     @pytest.mark.django_db
     def test_legal_username_manager_create_applies(self) -> None:
@@ -205,3 +208,125 @@ class TestModelValidation:
             User.validate_registration(username="bob", email="alice@example.com")
 
         assert str(excinfo.value.message_dict["email"][0]) == ERROR_EMAIL_ALREADY_REGISTERED
+
+
+class TestBulkPathsStoreHashedPasswords:
+    @pytest.mark.django_db
+    def test_bulk_paths_store_hashed_passwords(self) -> None:
+        User.objects.bulk_create(
+            [
+                User(username="bulkhash1", email="bulkhash1@example.com", password="secret-1"),
+                User(username="bulkhash2", email="bulkhash2@example.com", password="secret-2"),
+            ]
+        )
+
+        first = User.objects.get(username="bulkhash1")
+        second = User.objects.get(username="bulkhash2")
+        assert first.password != "secret-1"
+        assert first.check_password("secret-1")
+        assert second.password != "secret-2"
+        assert second.check_password("secret-2")
+
+
+class TestDirectSaveRefusesAnInvalidUsernameSilently:
+    @pytest.mark.django_db
+    def test_direct_save_refuses_an_invalid_username_silently(self) -> None:
+        user = User(username="bad name!", email="silent@example.com")
+
+        user.save()  # must not raise
+
+        assert not User.objects.filter(email="silent@example.com").exists()
+
+
+class TestCreateUserAndSuperuser:
+    @pytest.mark.django_db
+    def test_create_user_hashes_the_password(self) -> None:
+        user = User.objects.create_user("plainuser", "plain@example.com", "password123")
+
+        assert user.pk is not None
+        assert user.password != "password123"
+        assert user.check_password("password123")
+
+    @pytest.mark.django_db
+    def test_create_superuser_sets_staff_and_superuser_flags(self) -> None:
+        user = User.objects.create_superuser("superuser1", "superuser1@example.com", "password123")
+
+        assert user.is_staff and user.is_superuser
+        assert user.check_password("password123")
+
+    @pytest.mark.django_db
+    def test_createsuperuser_command_works_end_to_end(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from django.core.management import call_command
+
+        monkeypatch.setenv("DJANGO_SUPERUSER_PASSWORD", "super-password-1")
+        call_command(
+            "createsuperuser",
+            "--noinput",
+            username="commandsuperuser",
+            email="commandsuperuser@example.com",
+            verbosity=0,
+        )
+
+        user = User.objects.get(username="commandsuperuser")
+        assert user.is_staff and user.is_superuser
+        assert user.check_password("super-password-1")
+
+
+class TestEmailUniquenessIsByteExact:
+    @pytest.mark.django_db
+    def test_email_uniqueness_is_byte_exact(self) -> None:
+        _register("caseone", "foo@x.com")
+
+        output = _register("casetwo", "FOO@x.com")
+
+        assert output.success and output.user is not None
+        assert User.objects.get(username="casetwo").email == "FOO@x.com"
+        assert User.objects.filter(email="FOO@x.com").count() == 1
+        assert User.objects.filter(email="foo@x.com").count() == 1
+
+    @pytest.mark.django_db
+    def test_domain_case_variant_is_accepted_byte_exact(self) -> None:
+        _register("caseone", "foo@x.com")
+
+        output = _register("casetwo", "foo@X.COM")
+
+        assert output.success and output.user is not None
+        assert User.objects.get(username="casetwo").email == "foo@X.COM"
+        assert User.objects.filter(email="foo@X.COM").count() == 1
+        assert User.objects.filter(email="foo@x.com").count() == 1
+
+    @pytest.mark.django_db
+    def test_identical_email_is_rejected(self) -> None:
+        _register("caseone", "foo@x.com")
+
+        output = _register("casetwo", "foo@x.com")
+
+        assert not output.success
+        assert output.error == ERROR_EMAIL_ALREADY_REGISTERED
+
+
+class TestPaddedUsernamesAreRejectedOnEveryRegistrationPath:
+    @pytest.mark.django_db
+    def test_padded_usernames_are_rejected_on_every_registration_path_api(self, client) -> None:
+        response = client.post(
+            "/api/auth/register/",
+            {"username": "  padded  ", "email": "padded@example.com", "password": "password123"},
+            content_type="application/json",
+        )
+
+        assert response.status_code == 400
+        assert response.json()["username"][0] == ERROR_USERNAME_NOT_ALPHANUMERIC
+        assert not User.objects.filter(email="padded@example.com").exists()
+
+    @pytest.mark.django_db
+    def test_padded_usernames_are_rejected_on_every_registration_path_web(self, client) -> None:
+        response = client.post(
+            "/web/register/",
+            {"username": "  padded  ", "email": "padded@example.com", "password": "password123"},
+        )
+
+        assert response.status_code == 200
+        assert ERROR_USERNAME_NOT_ALPHANUMERIC in response.content.decode()
+        assert not User.objects.filter(email="padded@example.com").exists()

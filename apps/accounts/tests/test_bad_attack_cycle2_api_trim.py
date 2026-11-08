@@ -2,8 +2,9 @@
 
 The spec only mandates >= 8 chars and byte-exact comparison/storage, so an
 all-spaces 8-char password is valid and must work end-to-end. A username
-with surrounding spaces violates the username rule as submitted; the API
-CharField trims it — this test documents the trimming behavior.
+with surrounding spaces violates the username rule as submitted; since the
+06-regularize-audit-drift change removed DRF trimming, the API now rejects
+it with the username validation error like the web path already does.
 """
 
 import pytest
@@ -45,11 +46,11 @@ class TestApiSpacedPassword:
 
 
 class TestApiUsernameTrimConsistency:
-    def test_api_register_trims_surrounding_spaces_from_username(self, client):
+    def test_api_register_rejects_padded_username_with_the_username_error(self, client):
         response = client.post(
             REGISTER,
             {"username": "  validuser  ", "email": "x@example.com", "password": "password123"},
             content_type="application/json",
         )
-        assert response.status_code == 201
-        assert response.json()["username"] == "validuser"
+        assert response.status_code == 400
+        assert response.json()["username"][0] == "Username must contain only letters and numbers"
