@@ -155,3 +155,59 @@ class TestRegisterAPI:
         )
 
         assert response.status_code == 201
+
+
+@pytest.mark.django_db
+class TestAPISessionAuthSemantics:
+    def test_session_identity_wins_over_a_presented_jwt(self) -> None:
+        client = APIClient()
+        client.post(
+            REGISTER_URL,
+            {"username": "alice", "email": "alice@example.com", "password": "password123"},
+            format="json",
+        )
+        session_client = APIClient()
+        session_client.force_login(User.objects.get(username="alice"))
+
+        other = APIClient()
+        other.post(
+            REGISTER_URL,
+            {"username": "bob", "email": "bob@example.com", "password": "password123"},
+            format="json",
+        )
+        bob_tokens = other.post(
+            "/api/auth/login/",
+            {"username": "bob", "password": "password123"},
+            format="json",
+        ).json()
+
+        response = session_client.post(
+            "/api/posts/",
+            {"caption": "whose post?"},
+            format="json",
+            HTTP_AUTHORIZATION=f"Bearer {bob_tokens['access']}",
+        )
+
+        assert response.status_code == 201
+        assert response.json()["owner_username"] == "alice"
+
+    def test_csrf_is_enforced_on_session_authenticated_unsafe_methods(self) -> None:
+        client = APIClient(enforce_csrf_checks=True)
+        client.post(
+            REGISTER_URL,
+            {"username": "alice", "email": "alice@example.com", "password": "password123"},
+            format="json",
+        )
+        client.force_login(User.objects.get(username="alice"))
+
+        response = client.post("/api/posts/", {"caption": "no csrf"}, format="json")
+
+        assert response.status_code == 403
+
+    def test_anonymous_requests_are_rejected_without_a_challenge(self) -> None:
+        client = APIClient()
+
+        response = client.get("/api/posts/")
+
+        assert response.status_code == 403
+        assert "WWW-Authenticate" not in response.headers

@@ -99,6 +99,14 @@ class TestSidebarProfileLink:
         match = _anchor_tag(html, "nav-profile")
         assert f'href="{_profile_url(user)}"' in match
 
+    def test_topbar_links_to_own_profile(self, client) -> None:
+        user = _register_and_login(client)
+
+        html = client.get(FEED_URL).content.decode()
+
+        match = _anchor_tag(html, "nav-profile")
+        assert f'href="{_profile_url(user)}"' in match
+
 
 def _anchor_tag(html: str, testid: str) -> str:
     match = re.search(rf"<a [^>]*data-testid=\"{testid}\"[^>]*>", html)
