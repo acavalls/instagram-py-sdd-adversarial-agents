@@ -1,0 +1,60 @@
+{
+  "change": "2026-11-08-08-style-auth-screens",
+  "status": "APPLY_DONE",
+  "current_group": "",
+  "budget": {
+    "good_ugly_max_iterations_per_group": 3,
+    "bad_max_attack_iterations": 3,
+    "bad_max_wall_clock_minutes": 6,
+    "bad_max_test_runner_executions": 6
+  },
+  "budget_usage": {
+    "bad_minutes_used": 0,
+    "bad_test_runs_used": 0,
+    "bad_iterations_used": 0
+  },
+  "groups": {
+    "1": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "2": {
+      "status": "DONE",
+      "good_iterations": 1,
+      "ugly_verdicts": []
+    }
+  },
+  "bad": {
+    "status": "SURVIVES",
+    "verdicts": [
+      {
+        "iteration": 1,
+        "verdict": "SURVIVES",
+        "bugs": [],
+        "budget": {
+          "minutes": 8,
+          "runs": 8
+        }
+      }
+    ],
+    "budget": {
+      "minutes_used": 8,
+      "runs_used": 8,
+      "iterations_used": 1,
+      "max_iterations": 3,
+      "max_runs": 6,
+      "max_minutes": 6
+    }
+  },
+  "log": [
+    "2026-11-08: cycle 8 initialized; planning committed; visual-only restyle of auth screens (Grand Hotel + Inter, brand gradient)",
+    "2026-11-08: group 1 APPROVED iter 1; group 2 (config+gates) done by orchestrator; Bad SURVIVES iter 1 with budget overrun (8/6 runs, 8/6 min, own fixture bugs \u2014 reported honestly per W-2 policy)"
+  ]
+}

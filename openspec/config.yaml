@@ -13,10 +13,11 @@ context: |
   - API auth: JWT via djangorestframework-simplejwt; OpenAPI schema and
     Swagger UI via drf-spectacular. Web auth: Django sessions.
   - Frontend: Django templates + HTMX; plain CSS (a visual style with
-    gradients and Google Fonts is the design target, not a shipped
-    requirement — the current stylesheet uses system fonts, with one
-    decorative accent gradient (the story ring) already shipped). No
-    frontend build step, no SPA framework.
+    gradients and Google Fonts is the design target, being adopted
+    surface by surface: the auth screens ship the brand fonts and the
+    brand gradient; the remaining UI keeps system fonts plus the story
+    ring's decorative accent gradient). No frontend build step, no SPA
+    framework.
   - Architecture (fixed; not renegotiated in designs): Clean Architecture
     layers — views → use_cases → services → models — with apps organized
     by domain: accounts, posts, social, web. The REST API lives inside the
