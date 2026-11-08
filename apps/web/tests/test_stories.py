@@ -16,9 +16,12 @@ from apps.social.services import FollowService
 
 LOGIN_URL = "/web/login/"
 REGISTER_URL = "/web/register/"
+FEED_URL = "/web/feed/"
 CREATE_URL = "/web/stories/create/"
 VIEW_URL = "/web/stories/{story_id}/view/"
 HX_REQUEST = {"HX-Request": "true"}
+
+COMMENT_MARKERS = ("{#", "creation button plus one avatar", "carries `hx-swap-oob`")
 
 
 def _register(client: Client, username: str) -> User:
@@ -228,3 +231,45 @@ class TestStoriesBarOrdering:
         assert after.status_code == 200
         assert "Story viewed" in after.content.decode()
         assert _avatar_state(after.content.decode(), "bob") == "true"
+
+
+@pytest.mark.django_db
+class TestStoriesBarNoCommentLeak:
+    """Regression: Django `{# ... #}` comments do not span multiple lines,
+    so the stories-bar explanatory comment must never reach the rendered
+    HTML of the feed page or of a story action response."""
+
+    def test_feed_page_renders_no_stories_bar_comment_text(self, client: Client) -> None:
+        bob = _register(client, "bob")
+        alice = _register(client, "alice")
+        FollowService().follow(follower=alice, following=bob)
+        _create_story(bob)
+        _login(client, "alice")
+
+        response = client.get(FEED_URL)
+
+        assert response.status_code == 200
+        html = response.content.decode()
+        assert 'data-testid="stories-bar"' in html
+        for marker in COMMENT_MARKERS:
+            assert marker not in html
+
+    def test_story_action_response_has_no_comment_text(self, client: Client) -> None:
+        bob = _register(client, "bob")
+        alice = _register(client, "alice")
+        FollowService().follow(follower=alice, following=bob)
+        story = _create_story(bob)
+        _login(client, "alice")
+
+        create_response = client.post(CREATE_URL, headers=HX_REQUEST)
+        view_response = client.post(VIEW_URL.format(story_id=story.pk), headers=HX_REQUEST)
+
+        assert create_response.status_code == 200
+        assert "Story created" in create_response.content.decode()
+        assert 'hx-swap-oob="true"' in create_response.content.decode()
+        assert view_response.status_code == 200
+        assert "Story viewed" in view_response.content.decode()
+        assert 'hx-swap-oob="true"' in view_response.content.decode()
+        for html in (create_response.content.decode(), view_response.content.decode()):
+            for marker in COMMENT_MARKERS:
+                assert marker not in html

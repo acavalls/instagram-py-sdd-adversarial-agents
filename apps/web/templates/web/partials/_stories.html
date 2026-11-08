@@ -1,7 +1,8 @@
-{# The stories bar: the "Your story" creation button plus one avatar per followed user with active stories, in bar order (unviewed groups first).
+{% comment %}
+The stories bar: the "Your story" creation button plus one avatar per followed user with active stories, in bar order (unviewed groups first).
 
-   When rendered with `oob=True` the section carries `hx-swap-oob`, so an
-   HTMX story action (create or view) replaces the page's bar in place. #}
+When rendered with `oob=True` the section carries `hx-swap-oob`, so an HTMX story action (create or view) replaces the page's bar in place.
+{% endcomment %}
 <section class="stories-bar" id="stories-bar" data-testid="stories-bar"{% if oob %} hx-swap-oob="true"{% endif %}>
     <form class="story-create" method="post" action="{% url 'web:create_story' %}"
           hx-post="{% url 'web:create_story' %}" hx-swap="none"
