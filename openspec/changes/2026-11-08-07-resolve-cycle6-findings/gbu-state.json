@@ -1,0 +1,66 @@
+{
+  "change": "2026-11-08-07-resolve-cycle6-findings",
+  "status": "APPLY_DONE",
+  "current_group": "",
+  "budget": {
+    "good_ugly_max_iterations_per_group": 3,
+    "bad_max_attack_iterations": 3,
+    "bad_max_wall_clock_minutes": 6,
+    "bad_max_test_runner_executions": 6
+  },
+  "budget_usage": {
+    "bad_minutes_used": 0,
+    "bad_test_runs_used": 0,
+    "bad_iterations_used": 0
+  },
+  "groups": {
+    "1": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    },
+    "2": {
+      "status": "APPROVED",
+      "good_iterations": 1,
+      "ugly_verdicts": [
+        {
+          "iteration": 1,
+          "verdict": "APPROVED",
+          "deviations": []
+        }
+      ]
+    }
+  },
+  "bad": {
+    "status": "SURVIVES",
+    "verdicts": [
+      {
+        "iteration": 1,
+        "verdict": "SURVIVES",
+        "bugs": [],
+        "budget": {
+          "minutes": 4,
+          "runs": 1
+        }
+      }
+    ],
+    "budget": {
+      "minutes_used": 4,
+      "runs_used": 1,
+      "iterations_used": 1,
+      "max_iterations": 3,
+      "max_runs": 6,
+      "max_minutes": 6
+    }
+  },
+  "log": [
+    "2026-11-08: cycle 7 initialized; planning committed; 3 new scenarios declared in user-accounts; W-2 policy default declared (every run counts)",
+    "2026-11-08: groups 1-2 APPROVED iter 1; Bad SURVIVES iter 1 (12 attacks, 0 bugs); suite 515 passed, cov 99.12%"
+  ]
+}

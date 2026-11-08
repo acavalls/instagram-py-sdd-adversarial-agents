@@ -196,7 +196,9 @@ git-writing bash commands are denied), `good` has full write access.
   - Bad attack iterations: max **2**.
   - Bad wall clock: **6 minutes** per cycle.
   - Bad test-runner executions: **6** targeted runs (never full suites —
-    full suites belong to the quality gates).
+    full suites belong to the quality gates). EVERY test-runner execution
+    counts toward this budget, including targeted inspection runs;
+    overruns are reported honestly in the report and the budget line.
   - Any budget exhausted before delivering evidence is reported as
     `BUDGET_EXHAUSTED` → STOP and ask the user (never treated as "code is
     correct").
