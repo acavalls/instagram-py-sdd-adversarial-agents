@@ -1,0 +1,172 @@
+# user-accounts Specification
+
+## Purpose
+Lets a person create an identity in the app and prove it, both from the web
+UI (session) and from the REST API (JWT). It owns user registration rules
+and authentication behavior; everything that attaches content or social
+relationships to a user builds on this capability.
+
+## Requirements
+
+### Requirement: User account data
+The system SHALL store a user account with a unique username, a unique email,
+an optional bio, an optional profile picture and a hashed password. The
+username MUST contain only alphanumeric characters and MUST be between 3 and
+150 characters long. The username rule MUST hold on every storage path,
+including queryset bulk operations: a bulk write carrying a legal username
+MUST apply it, a bulk write carrying a username that violates the rule MUST
+be refused with the model's username validation error, and a bulk write
+carrying a non-literal username value (an expression or missing value with
+no text to validate) MUST be refused with the same error. Passwords MUST be
+compared and stored byte-exactly, without whitespace trimming or case
+folding.
+
+#### Scenario: User account persisted
+- **GIVEN** a user completes registration with valid data
+- **THEN** the system stores a user with UUID identifier, unique username, unique email, optional bio, optional profile picture and a hashed (never plain-text) password
+
+#### Scenario: Username format validation
+- **WHEN** a registration attempt uses a username shorter than 3 characters, longer than 150 characters, or containing non-alphanumeric characters
+- **THEN** the system rejects the registration with the error "Username must contain only letters and numbers" or an equivalent length error
+
+#### Scenario: Bulk writes enforce the username rule
+- **WHEN** a bulk write (queryset update, bulk create or bulk update) carries a username that violates the username rule
+- **THEN** the system rejects the write with the model's username validation error instead of storing the invalid username
+
+#### Scenario: Non-literal username write refused
+- **WHEN** a queryset update or bulk create carries a non-literal username value (an expression or a value with no text to validate)
+- **THEN** the system refuses the whole write with the model's username validation error
+
+#### Scenario: Legal username bulk write applies
+- **WHEN** a bulk update or bulk create carries a literal username that satisfies the username rule
+- **THEN** the system writes the new username and the write succeeds
+
+#### Scenario: Password comparison is byte-exact
+- **WHEN** credentials are checked for login or token issuance
+- **THEN** the system compares the submitted password byte-exactly, without trimming whitespace or folding case
+
+### Requirement: User registration
+The system SHALL allow a visitor to register an account with username, email
+and password. Registration MUST fail with an explicit error when the email is
+already registered ("Email already registered") or the username is already
+taken ("Username already taken"). The password MUST be at least 8 characters
+long. The system MUST NOT require the user to be logged in to register.
+Storage MUST guarantee username and email uniqueness even under concurrent
+registration attempts.
+
+#### Scenario: Successful registration
+- **WHEN** a visitor submits registration with a new email, a new valid username and a password of at least 8 characters
+- **THEN** the system creates the account and, on the web UI, redirects to the login page with the confirmation "Account created successfully. Please login."
+
+#### Scenario: Duplicate email rejected
+- **WHEN** a visitor submits registration with an email that is already registered
+- **THEN** the system rejects the registration with the error "Email already registered"
+
+#### Scenario: Duplicate username rejected
+- **WHEN** a visitor submits registration with a username that is already taken
+- **THEN** the system rejects the registration with the error "Username already taken"
+
+#### Scenario: Password too short rejected
+- **WHEN** a visitor submits registration with a password shorter than 8 characters
+- **THEN** the system rejects the registration with the error "Password must be at least 8 characters"
+
+#### Scenario: Concurrent duplicate registration keeps data consistent
+- **WHEN** two registration attempts for the same username or email race past the explicit duplicate check
+- **THEN** storage accepts at most one account and never stores a duplicate username or email
+
+### Requirement: Web session login
+The system SHALL allow a user to log in from the web UI with username and
+password. On success the system MUST create a session, redirect the user to
+the feed page and confirm with "Logged in successfully". On failure the
+system MUST show a single generic error ("Invalid credentials") without
+revealing whether the username or the password was wrong.
+
+#### Scenario: Successful web login
+- **WHEN** a registered user submits the login form with correct username and password
+- **THEN** the system creates a session, redirects to the feed page and shows the toast "Logged in successfully"
+
+#### Scenario: Failed web login hides the cause
+- **WHEN** a user submits the login form with a wrong password (or an unknown username)
+- **THEN** the system re-renders the login page with the error "Invalid credentials" and does not reveal which field was wrong
+
+### Requirement: Web session logout
+The system SHALL allow a logged-in user to log out from the web UI. Logging
+out MUST clear the session, redirect to the login page and confirm with "You
+have been logged out". Logout MUST be a POST-only action: non-POST requests
+MUST respond 405 without clearing the session.
+
+#### Scenario: Successful logout
+- **WHEN** a logged-in user requests logout
+- **THEN** the system clears the session, redirects to the login page and shows "You have been logged out"
+
+#### Scenario: Protected pages require login
+- **WHEN** an anonymous visitor requests a page that requires authentication
+- **THEN** the system redirects to the login page
+
+#### Scenario: Logout is POST-only
+- **WHEN** a logged-in user sends a GET (or other non-POST) request to the logout endpoint
+- **THEN** the system responds 405 and the session stays active
+
+### Requirement: API registration
+The system SHALL expose `POST /api/auth/register/` accepting username, email
+and password. On success it MUST respond 201 with the user id, username,
+email and bio. It MUST respond 409 when the email or username is already
+registered and 400 when validation fails.
+
+#### Scenario: Successful API registration
+- **WHEN** a client posts valid registration data to `/api/auth/register/`
+- **THEN** the system responds 201 with the created user data (id, email, username, bio, updated_at)
+
+#### Scenario: API registration conflict
+- **WHEN** a client posts registration data with an already registered email or an already taken username
+- **THEN** the system responds 409 with the corresponding error message
+
+#### Scenario: API registration validation error
+- **WHEN** a client posts registration data that fails field validation (bad email, short username or short password)
+- **THEN** the system responds 400 with field-level validation errors
+
+### Requirement: API JWT login
+The system SHALL expose `POST /api/auth/login/` accepting username and
+password. On success it MUST respond 200 with the user data, an access token
+with a 30 minute lifetime and a refresh token with a 1 day lifetime. On any
+failure — including blank or missing fields — it MUST respond 401 with the
+generic error "Invalid credentials".
+
+#### Scenario: Successful API login
+- **WHEN** a client posts correct credentials to `/api/auth/login/`
+- **THEN** the system responds 200 with the user data, a JWT access token and a JWT refresh token
+
+#### Scenario: Failed API login
+- **WHEN** a client posts wrong credentials to `/api/auth/login/`
+- **THEN** the system responds 401 with the error "Invalid credentials"
+
+#### Scenario: API login with missing fields
+- **WHEN** a client posts a login request with blank or missing username or password
+- **THEN** the system responds 401 with the error "Invalid credentials" and never reveals which field is missing
+
+### Requirement: API token refresh
+The system SHALL allow a client to exchange a valid refresh token for a new
+access token. A missing, expired or invalid refresh token MUST be rejected
+without issuing a new access token.
+
+#### Scenario: Successful token refresh
+- **WHEN** a client posts a valid refresh token to the token refresh endpoint
+- **THEN** the system responds 200 with a new access token
+
+#### Scenario: Invalid refresh token rejected
+- **WHEN** a client posts a missing, expired or invalid refresh token
+- **THEN** the system rejects the request without issuing an access token
+
+### Requirement: Authenticated landing placeholder
+The system SHALL serve a feed page at `/web/feed/` that requires an
+authenticated session and acts as the landing page after web login. Until
+the social capability delivers the followed-users feed, the page SHALL show
+a declared placeholder empty state instead of posts.
+
+#### Scenario: Placeholder requires login
+- **WHEN** an anonymous visitor requests `/web/feed/`
+- **THEN** the system redirects to the login page
+
+#### Scenario: Logged-in user reaches the placeholder
+- **WHEN** a logged-in user requests `/web/feed/`
+- **THEN** the system renders the feed page with the declared placeholder empty state
